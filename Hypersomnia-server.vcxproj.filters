@@ -21,9 +21,33 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="server\worker_thread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="server\connected_user.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="server\session.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="server\io_operation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="server\worker_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="server\connected_user.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="server\session.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="server\io_operations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

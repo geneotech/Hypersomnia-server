@@ -8,16 +8,16 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
-		Release|Win32 = Release|Win32
-		ReleaseDebug|Win32 = ReleaseDebug|Win32
+		Optimized|Win32 = Optimized|Win32
+		RelDeb|Win32 = RelDeb|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.Debug|Win32.ActiveCfg = ReleaseDebug|Win32
 		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.Debug|Win32.Build.0 = ReleaseDebug|Win32
-		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.Release|Win32.ActiveCfg = Release|Win32
-		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.Release|Win32.Build.0 = Release|Win32
-		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.ReleaseDebug|Win32.ActiveCfg = Release|Win32
-		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.ReleaseDebug|Win32.Build.0 = Release|Win32
+		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.Optimized|Win32.ActiveCfg = ReleaseDebug|Win32
+		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.Optimized|Win32.Build.0 = ReleaseDebug|Win32
+		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.RelDeb|Win32.ActiveCfg = Optimized|Win32
+		{C3710A9A-6D71-4981-A34A-6CD74BD93E18}.RelDeb|Win32.Build.0 = Optimized|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

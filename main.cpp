@@ -6,76 +6,10 @@
 #include "utilities/network/network.h"
 #include "utilities/error/error.h"
 
-
-//struct user : public db::network::overlapped {
-//	char buffer[1000];
-//	buf b;
-//	tcp client;
-//	user() : b(buffer, 1000) {
-//		trecv.who = tsend.who = this;
-//	}
-//
-//	struct uoverlapped : public db::network::overlapped {
-//		user* who;
-//	} trecv, tsend;
-//
-//} users[10];
-//int ui = -1;
+#include "server/worker_thread.h"
+#include "server/connected_user.h"
 
 using namespace augs;
-int work(threads::iocp* io) {
-	threads::completion comp;
-	network::overlapped_accept* acc, tacc;
-	//user* u, *root;
-	//user::uoverlapped *uov;
-	
-	while (true) {
-		if (io->get_completion(comp)) {
-	//
-	//		if (comp.get_user(u)) {
-	//			if (comp.get_key() == 0) {
-	//				++ui; ui %= 10;
-	//				comp.get_overlapped(acc);
-	//				users[ui].client.open(*acc);
-	//
-	//				s.accept(&tacc);
-	//
-	//				users[ui].client.linger(true, 100);
-	//
-	//				io->associate(users[ui].client, 1);
-	//
-	//				users[ui].client.recv(&users[ui].b, 1, &users[ui].trecv);
-	//				users[ui].client.send(&bb, 1, &users[ui].tsend);
-	//
-	//				//	users[ui].client.close();
-	//			}
-	//			else if (comp.get_key() == 1) {
-	//				uov = (user::uoverlapped*)u;
-	//				root = (uov->who);
-	//				if (uov == &(root->tsend)) {
-	//					cout << uov->get_result() << " bytes sent." << endl;
-	//				}
-	//				else {
-	//					cout << "from: " << root->client.addr.get_ipv4() << endl;
-	//					cout << root->buffer << endl;
-	//				}
-	//			}
-	//		}
-	//		else {
-	//			io->post_completion(io->QUIT); // quit
-	//			break;
-	//		}
-	//	}
-	//	else if (!comp.get_user(u)) {
-	//		// timeout
-	//	}
-	//	else {
-	//
-		}// error
-	}
-	//
-	return 0;
-}
 
 int main() {
 	framework::init();
@@ -84,36 +18,36 @@ int main() {
 	lua_state.bind_whole_engine();
 
 	lua_state.dofile("init.lua"); 
+	
+	std::vector<std::function<void()>> worker_functions;
+	std::unique_ptr<worker_thread_info[]> worker_infos;
 
-	//RedirectIOToConsole();
-	augs::network::tcp accept_socket;
-	if (augs::network::init())
-	{
-		char buffer[1000];
+	if (network::init()) {
+		threads::iocp completion_port;
+		using namespace network;
+		udp udp_socket; 
 
-		augs::network::overlapped_accept tacc;
-		augs::threads::iocp completion_port;
+		if (udp_socket.open()) {
+			completion_port.open();
+			completion_port.associate(udp_socket, 0);
 
-		if (accept_socket.open()) {
+			int worker_amount = threads::get_num_cores() * 2; 
 
-			//s.linger(true, 100);
-			accept_socket.nagle(false);
-			accept_socket.bind(27017);
-			if (accept_socket.listen(27017)) {
-				completion_port.open();
-				completion_port.associate(accept_socket, 0);
-				completion_port.create_pool(work, &completion_port, 0);
+			worker_functions.resize(worker_amount);
+			worker_infos.reset(new worker_thread_info[worker_amount]);
+			
+			for (int i = 0; i < worker_amount; ++i) {
+				worker_infos[i].owner_iocp = &completion_port;
+				worker_functions[i] = std::bind(main_hypersomnia_worker_thread, std::ref(worker_infos[i]));
+				completion_port.add_worker(&worker_functions[i]);
+			}
 
-				int accres = accept_socket.accept(&tacc);
-
-				std::cout << accres << std::endl;
-				work(&completion_port);
+			if (udp_socket.bind(27017)) {
+				/* initialize several pending reads on the main channel */
+				
+				//int sres = udp_socket.send(to, buf("he he hellmanns", strlen("he he hellmanns") + 1), &tsend);
 			}
 		}
-
-		accept_socket.close();
-		//for (int i = 0; i < 10; ++i)
-		//	users[i].~user();
 
 		completion_port.close();
 	} 
