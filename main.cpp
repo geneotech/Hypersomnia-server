@@ -45,6 +45,11 @@ int main() {
 			if (udp_socket.bind(27017)) {
 				/* initialize several pending reads on the main channel */
 				
+				/* 3 pending reads */
+				udp_socket.recv(&worker_infos[0].pending_recv_operation_slot);
+				udp_socket.recv(&worker_infos[1].pending_recv_operation_slot);
+				udp_socket.recv(&worker_infos[2].pending_recv_operation_slot);
+
 				//int sres = udp_socket.send(to, buf("he he hellmanns", strlen("he he hellmanns") + 1), &tsend);
 			}
 		}

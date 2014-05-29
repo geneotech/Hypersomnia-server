@@ -22,29 +22,25 @@ void main_hypersomnia_worker_thread(worker_thread_info& worker_info) {
 	auto* completion_port = worker_info.owner_iocp;
 
 	while (true) {
-		auto completion_result = completion_port->get_completion(completion_object);
+		auto completion_object = completion_port->get_completion();
 		completion_object.get_operation_info(current_operation);
+		
+		switch (completion_object.result_type) {
+		case threads::completion::result::FAILED_TO_DEQUEUE_OR_TIMEOUT:
+			break;
 
-		if (completion_result == FALSE) {
-			/* overlapped is null: dequeue error: failed to dequeue anything (eg. timeout) */
-			if (!current_operation) {
-				// completion_port->post_completion(threads::iocp::QUIT); // quit
-			}
-			/* i/o error: i/o operation failed */
-			else {
-				// completion_port->post_completion(threads::iocp::QUIT); // quit
-			}
-		}
-		else {
-			/* succesfull i/o operation */
-			if (current_operation) {
-				current_operation->userdata->on_completion(current_operation);
-			}
-			/* else it must have been a custom completion posted */
-			else {
-				completion_port->post_completion(threads::iocp::QUIT); // quit
-				break;
-			}
+		case threads::completion::result::FAILED_IO_OPERATION:
+			break;
+
+		case threads::completion::result::SUCCESSFUL_IO_OP_OR_CUSTOM:
+			current_operation->userdata->on_completion(current_operation);
+			break;
+
+		case threads::completion::result::CUSTOM_POST:
+			completion_port->post_completion(threads::iocp::QUIT); // quit
+			break;
+
+		default: break;
 		}
 	}
 }
