@@ -30,9 +30,6 @@
     <ClCompile Include="server\session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="server\io_operation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -45,9 +42,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="server\session.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="server\io_operations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
