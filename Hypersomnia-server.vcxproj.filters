@@ -44,5 +44,8 @@
     <ClInclude Include="server\session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="server\packet_receiving_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

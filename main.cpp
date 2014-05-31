@@ -9,6 +9,8 @@
 #include "server/worker_thread.h"
 #include "server/connected_user.h"
 
+#include "server/session.h"
+
 using namespace augs;
 
 int main() {
@@ -22,27 +24,8 @@ int main() {
 	lua_state.dofile("init.lua"); 
 
 	if (network::init()) { 
-		using namespace network;
-		udp udp_socket; 
-
-		if (udp_socket.open()) {
-			udp_socket.set_blocking(true);
-
-			int worker_amount = threads::get_num_cores() * 2; 
-
-			if (udp_socket.bind(27017)) {
-				//while (true) { 
-					network::ip from;
-					wsabuf output;
-					char buffer[10000];
-					output.set(buffer, sizeof(buffer));
-					unsigned long bytes_received;
-					unsigned long flags;
-
-					udp_socket.recv(from, output, bytes_received, flags);
-				//}
-			}
-		}
+		session new_session;
+		new_session.start_receiving_packets(27017);
 	}  
 	augs::network::deinit();
 	 
