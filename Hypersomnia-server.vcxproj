@@ -86,10 +86,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Optimized|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RelDeb|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="server\connected_user.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RelDeb|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Optimized|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="server\session.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Optimized|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RelDeb|Win32'">Use</PrecompiledHeader>
@@ -104,7 +100,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="server\connected_user.h" />
     <ClInclude Include="server\packet_receiving_thread.h" />
     <ClInclude Include="server\session.h" />
     <ClInclude Include="server\worker_thread.h" />

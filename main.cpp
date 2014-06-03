@@ -7,7 +7,6 @@
 #include "utilities/error/error.h"
 
 #include "server/worker_thread.h"
-#include "server/connected_user.h"
 
 #include "server/session.h"
 
@@ -23,11 +22,12 @@ int main() {
 
 	lua_state.dofile("init.lua"); 
 
-	if (network::init()) { 
+	if (network::init()) {  
 		session new_session;
 		new_session.start_receiving_packets(27017);
 	}  
-	augs::network::deinit();
+
+	augs::network::deinit(); 
 	 
 	framework::deinit();
 	return 0;
