@@ -24,7 +24,10 @@ int main() {
 
 	if (network::init()) {  
 		session new_session;
-		new_session.start_receiving_packets(27017);
+		if (new_session.start_network_thread(27017)) {
+			while (true)
+				new_session.loop();
+		}
 	}  
 
 	augs::network::deinit(); 

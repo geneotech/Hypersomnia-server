@@ -20,14 +20,15 @@ struct session {
 		*/
 		void handle_packet(augs::network::udp::recv_result data);
 
+		/* just a draft; sending functions with several modes that may or may not guarantee the delivery. */
+		void send_unreliable(augs::network::packet);
+		void send_reliable(augs::network::packet);
+
 		session& owner_session;
 		connection(session&);
 	};
 
-	//session() = default;
-	session(unsigned num_of_workers = 1);
-
-	augs::network::udp socket;
+	session();
 
 	resources::lua_state_wrapper global_lua_state;
 
@@ -41,7 +42,17 @@ struct session {
 	/* map ip address as uint to the connection structure */
 	std::unordered_map<unsigned long, connection> connections;
 
-	void start_receiving_packets(int port);
+	std::mutex packet_queue_mutex;
+	std::vector<augs::network::udp::recv_result> incoming_packets;
+	
+	augs::network::udp udp_socket;
 
-	augs::threads::pool main_worker_pool;
+	std::thread network_thread;
+
+	void network_thread_procedure();
+	bool start_network_thread(int port);
+
+	void loop();
+
+	bool requesting_shutdown = false;
 };
