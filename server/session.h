@@ -9,7 +9,10 @@
 #include <mutex>
 #include <unordered_map>
 
-struct session {
+class session {
+	void network_thread_procedure();
+public:
+
 	struct connection {
 		augs::misc::timer last_received_packet;
 
@@ -37,8 +40,6 @@ struct session {
 
 	augs::misc::timer timeout_check_timer;
 
-	std::mutex connections_mutex;
-
 	/* map ip address as uint to the connection structure */
 	std::unordered_map<unsigned long, connection> connections;
 
@@ -49,7 +50,6 @@ struct session {
 
 	std::thread network_thread;
 
-	void network_thread_procedure();
 	bool start_network_thread(int port);
 
 	void loop();
