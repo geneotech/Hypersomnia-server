@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include "game_framework/resources/lua_state_wrapper.h"
-#include "network/udp.h"
 
 #include "misc/timer.h"
 #include "threads/pool.h"
