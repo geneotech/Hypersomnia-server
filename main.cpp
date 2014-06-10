@@ -25,8 +25,7 @@ int main() {
 	lua_state.bind_whole_engine();
 
 	lua_state.dofile("init.lua"); 
-
-
+	 
 	RakNet::RakPeerInterface *peer = RakNet::RakPeerInterface::GetInstance();
 	RakNet::Packet *packet;
 
@@ -35,7 +34,7 @@ int main() {
 	peer->SetMaximumIncomingConnections(2);
 
 	while (1)
-	{
+	{ 
 		for (packet = peer->Receive(); packet; peer->DeallocatePacket(packet), packet = peer->Receive())
 		{
 			switch (packet->data[0])
