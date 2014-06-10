@@ -92,9 +92,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="server\packet_receiving_thread.h" />
-    <ClInclude Include="server\session.h" />
-    <ClInclude Include="server\worker_thread.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
