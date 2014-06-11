@@ -1,8 +1,5 @@
 #pragma once
-#include "RakPeerInterface.h"
-#include "MessageIdentifiers.h"
-#include "BitStream.h"
-#include "RakNetTypes.h"
+#include "network/network_interface.h"
 
 #include "game_framework/resources/lua_state_wrapper.h"
 #include "game_framework/game_framework.h"
@@ -26,20 +23,17 @@ int main() {
 
 	lua_state.dofile("init.lua"); 
 	 
-	RakNet::RakPeerInterface *peer = RakNet::RakPeerInterface::GetInstance();
-	RakNet::Packet *packet;
+	network::network_interface server;
+	server.listen(37017, 2, 4);
 
-	RakNet::SocketDescriptor sd(37017, 0);
-	peer->Startup(4, &sd, 1);
-	peer->SetMaximumIncomingConnections(2);
+	network::network_interface::packet received;
 
 	while (1)
 	{ 
-		for (packet = peer->Receive(); packet; peer->DeallocatePacket(packet), packet = peer->Receive())
+		if (server.receive(received))
 		{
-			switch (packet->data[0])
+			switch (received.byte(0))
 			{
-				break;
 			case ID_NEW_INCOMING_CONNECTION:
 				printf("A connection is incoming.\n");
 				break;
@@ -53,22 +47,25 @@ int main() {
 			case ID_GAME_MESSAGE_1:
 			{
 				RakNet::RakString rs;
-				RakNet::BitStream bsIn(packet->data, packet->length, false);
+				RakNet::BitStream bsIn(received.info->data, received.info->length, false);
 				bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
 				bsIn.Read(rs);
 				printf("%s\n", rs.C_String());
+
+
+				RakNet::BitStream bsOut;
+				bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
+				bsOut.Write("Hello world");
+				server.peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, (received.info->guid), false);
 			}
 				break;
 
 			default:
-				printf("Message with identifier %i has arrived.\n", packet->data[0]);
+				printf("Message with identifier %i has arrived.\n", received.info->data[0]);
 				break;
 			}
 		}
 	}
-
-
-	RakNet::RakPeerInterface::DestroyInstance(peer);
 
 	framework::deinit();
 	return 0;
