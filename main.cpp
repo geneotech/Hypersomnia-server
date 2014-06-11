@@ -47,7 +47,7 @@ int main() {
 			case ID_GAME_MESSAGE_1:
 			{
 				RakNet::RakString rs;
-				RakNet::BitStream bsIn(received.info->data, received.info->length, false);
+				auto& bsIn = received.get_bitstream();
 				bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
 				bsIn.Read(rs);
 				printf("%s\n", rs.C_String());
@@ -56,12 +56,12 @@ int main() {
 				RakNet::BitStream bsOut;
 				bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
 				bsOut.Write("Hello world");
-				server.peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, (received.info->guid), false);
+				server.send(bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, received.guid(), false);
 			}
 				break;
 
 			default:
-				printf("Message with identifier %i has arrived.\n", received.info->data[0]);
+				printf("Message with identifier %i has arrived.\n", received.byte(0));
 				break;
 			}
 		}
