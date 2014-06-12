@@ -1,6 +1,4 @@
 #pragma once
-#include "network/network_interface.h"
-
 #include "game_framework/resources/lua_state_wrapper.h"
 #include "game_framework/game_framework.h"
 
