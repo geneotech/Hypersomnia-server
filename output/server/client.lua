@@ -1,8 +1,14 @@
 client_class = inherits_from ()
 
+network_message.ID_GAME_MESSAGE_1 = network_message.ID_USER_PACKET_ENUM + 1
+network_message.ID_MOVEMENT = network_message.ID_USER_PACKET_ENUM + 2
+
+
 function client_class:constructor()
 	self.inventory = {}
 	self.position_history = {}
+	
+	self.character_entity = nil
 end
 
 function client_class:handle_message(received)
@@ -19,6 +25,8 @@ function client_class:handle_message(received)
 		bsOut:WriteByte(UnsignedChar(network_message.ID_GAME_MESSAGE_1));
 		WriteCString(bsOut, "Hello world");
 		server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, received:guid(), false)
+	elseif message_type == network_message.ID_MOVEMENT then
+		
 	else
 		print ("Message with identifier " .. message_type .. " has arrived.")
 	end
