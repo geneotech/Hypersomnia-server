@@ -3,6 +3,7 @@ client_class = inherits_from ()
 network_message.ID_INITIAL_STATE = network_message.ID_USER_PACKET_ENUM + 1
 network_message.ID_MOVEMENT = network_message.ID_USER_PACKET_ENUM + 2
 network_message.ID_NEW_PLAYER = network_message.ID_USER_PACKET_ENUM + 3
+network_message.ID_PLAYER_DISCONNECTED = network_message.ID_USER_PACKET_ENUM + 4
 
 function client_class:constructor(owner_scene, guid)
 	self.position_history = {}
@@ -27,9 +28,26 @@ function client_class:constructor(owner_scene, guid)
 	bsOut:WriteByte(UnsignedChar(network_message.ID_NEW_PLAYER))
 	WriteRakNetGUID(bsOut, guid)
 	
-	
 	-- notify all others that the client was created
 	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, guid, true)
+end
+
+
+function client_class:close_connection()
+	sample_scene.world_object.world:delete_entity(self.controlled_character.body:get(), nil)
+
+	for i=1, #all_clients do
+		if all_clients[i] == self then
+			table.remove(all_clients, i)
+			break
+		end
+	end
+	
+	local bsOut = BitStream()
+	bsOut:WriteByte(UnsignedChar(network_message.ID_PLAYER_DISCONNECTED))
+	WriteRakNetGUID(bsOut, self.guid)
+	
+	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, self.guid, false)
 end
 
 function client_class:handle_message(received)

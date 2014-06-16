@@ -39,6 +39,8 @@ dofile "server\\game\\player.lua"
 
 SHOULD_QUIT_FLAG = false
 
+
+
 while not SHOULD_QUIT_FLAG do
 	if server:receive(received) then
 		local message_type = received:byte(0)
@@ -48,9 +50,11 @@ while not SHOULD_QUIT_FLAG do
 			
 			table.insert(all_clients, new_client)
 		elseif message_type == network_message.ID_DISCONNECTION_NOTIFICATION then
+			user_map:at(received:guid()):close_connection()
 			user_map:remove(received:guid())
 			print "A client has disconnected."
 		elseif message_type == network_message.ID_CONNECTION_LOST then
+			user_map:at(received:guid()):close_connection()
 			user_map:remove(received:guid())
 			print "A client lost the connection."
 		else
