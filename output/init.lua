@@ -33,6 +33,8 @@ blank_sprite = create_sprite {
 	size = vec2(37, 37)
 }
 
+all_clients = {}
+
 dofile "server\\game\\player.lua"
 
 SHOULD_QUIT_FLAG = false
@@ -41,15 +43,10 @@ while not SHOULD_QUIT_FLAG do
 	if server:receive(received) then
 		local message_type = received:byte(0)
 		if message_type == network_message.ID_NEW_INCOMING_CONNECTION then
-			user_map:add(received:guid(), client_class:create(sample_scene, received:guid()))
+			local new_client = client_class:create(sample_scene, received:guid())
+			user_map:add(received:guid(), new_client)
 			
-			local bsOut = BitStream()
-			bsOut:WriteByte(UnsignedChar(network_message.ID_NEW_PLAYER))
-			WriteRakNetGUID(bsOut, received:guid())
-			
-			-- notify all others that the client was created
-			server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, received:guid(), true)
-			
+			table.insert(all_clients, new_client)
 		elseif message_type == network_message.ID_DISCONNECTION_NOTIFICATION then
 			user_map:remove(received:guid())
 			print "A client has disconnected."
