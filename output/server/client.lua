@@ -4,11 +4,13 @@ network_message.ID_GAME_MESSAGE_1 = network_message.ID_USER_PACKET_ENUM + 1
 network_message.ID_MOVEMENT = network_message.ID_USER_PACKET_ENUM + 2
 
 
-function client_class:constructor()
-	self.inventory = {}
+function client_class:constructor(owner_scene, guid)
 	self.position_history = {}
+	self.guid = guid
 	
-	self.character_entity = nil
+	self.controlled_character = create_basic_player(owner_scene, teleport_position)
+	print "A connection is incoming."
+	-- create new entity here
 end
 
 function client_class:handle_message(received)

@@ -23,8 +23,17 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\filters.lua")
 dofile "server\\view\\input.lua"
 dofile "server\\view\\camera.lua"
 
+
 sample_scene = scene_class:create()
 sample_scene:load_map(MAPS_DIRECTORY .. "sample_map.lua", "server\\loaders\\basic_map_loader.lua")
+
+blank_sprite = create_sprite {
+	image = sample_scene.sprite_library["blank"],
+	color = rgba(0, 255, 0, 255),
+	size = vec2(37, 37)
+}
+
+dofile "server\\game\\player.lua"
 
 SHOULD_QUIT_FLAG = false
 
@@ -32,17 +41,14 @@ while not SHOULD_QUIT_FLAG do
 	if server:receive(received) then
 		local message_type = received:byte(0)
 		if message_type == network_message.ID_NEW_INCOMING_CONNECTION then
-			user_map:add(received:guid(), client_class:create())
-			print "A connection is incoming."
-			print (user_map:size())
+			user_map:add(received:guid(), client_class:create(sample_scene, received:guid()))
+			
 		elseif message_type == network_message.ID_DISCONNECTION_NOTIFICATION then
 			user_map:remove(received:guid())
 			print "A client has disconnected."
-			print (user_map:size())
 		elseif message_type == network_message.ID_CONNECTION_LOST then
 			user_map:remove(received:guid())
 			print "A client lost the connection."
-			print (user_map:size())
 		else
 			user_map:at(received:guid()):handle_message(received)
 		end

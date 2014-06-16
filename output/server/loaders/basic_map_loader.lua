@@ -26,8 +26,8 @@ return function(map_filename, scene_object)
 		world:create_entity (tiled_map_loader.basic_entity_table(object, type_table_by_object[object], scene_object.resource_storage, scene_object.world_camera, scene_object.texture_by_filename))
 	end
 	
-	-- world.physics_system.enable_interpolation = 1
-	-- world.physics_system:configure_stepping(60, 5)
+	world.physics_system.enable_interpolation = 0
+	world.physics_system:configure_stepping(60, 5)
 	
 	-- initialize input
 	world.input_system:clear_contexts()
@@ -42,6 +42,8 @@ return function(map_filename, scene_object)
 			custom_intents.QUIT
 		}
 	})
+	
+	scene_object.teleport_position = objects_by_type["teleport_position"][1]
 	
 	scene_object.main_input_entity.intent_message = function(self, message)
 		if message.intent == custom_intents.QUIT then
