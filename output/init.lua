@@ -43,6 +43,13 @@ while not SHOULD_QUIT_FLAG do
 		if message_type == network_message.ID_NEW_INCOMING_CONNECTION then
 			user_map:add(received:guid(), client_class:create(sample_scene, received:guid()))
 			
+			local bsOut = BitStream()
+			bsOut:WriteByte(UnsignedChar(network_message.ID_NEW_PLAYER))
+			WriteRakNetGUID(bsOut, received:guid())
+			
+			-- notify all others that the client was created
+			server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, received:guid(), true)
+			
 		elseif message_type == network_message.ID_DISCONNECTION_NOTIFICATION then
 			user_map:remove(received:guid())
 			print "A client has disconnected."
