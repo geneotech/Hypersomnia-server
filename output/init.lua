@@ -6,7 +6,7 @@ ENGINE_DIRECTORY = "..\\..\\Augmentations\\scripts\\"
 dofile (ENGINE_DIRECTORY .. "load_libraries.lua")
 
 server = network_interface()
-server:listen(37017, 6, 10)
+server:listen(37017, 30, 40)
 
 received = network_packet()
 

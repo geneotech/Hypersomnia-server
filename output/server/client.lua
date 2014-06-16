@@ -44,10 +44,12 @@ function client_class:close_connection()
 	end
 	
 	local bsOut = BitStream()
+	print(network_message.ID_PLAYER_DISCONNECTED)
 	bsOut:WriteByte(UnsignedChar(network_message.ID_PLAYER_DISCONNECTED))
 	WriteRakNetGUID(bsOut, self.guid)
 	
-	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, self.guid, false)
+	-- notify all but disconnected one
+	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, self.guid, true)
 end
 
 function client_class:handle_message(received)
