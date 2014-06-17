@@ -49,7 +49,6 @@ while not SHOULD_QUIT_FLAG do
 			local new_client = client_class:create(sample_scene, received:guid())
 			user_map:add(received:guid(), new_client)
 			
-			table.insert(all_clients, new_client)
 		elseif message_type == network_message.ID_DISCONNECTION_NOTIFICATION then
 			user_map:at(received:guid()):close_connection()
 			user_map:remove(received:guid())
@@ -63,6 +62,9 @@ while not SHOULD_QUIT_FLAG do
 		end
 	end
 	
+	for j=1, #all_clients do
+		all_clients[j]:loop()
+	end
 	
 	-- tick the game world
 	sample_scene:loop()

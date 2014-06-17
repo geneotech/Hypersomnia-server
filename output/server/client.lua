@@ -19,12 +19,12 @@ function client_class:constructor(owner_scene, guid)
 	self.guid = guid
 	
 	-- create new entity here
-	self.controlled_character = create_basic_player(owner_scene, teleport_position)
+	self.controlled_character = create_basic_player(owner_scene, vec2(-40*#all_clients, 0))
 	print "A connection is incoming."
 	
 	-- firstly notify this one about the game state
 	local bsOut = BitStream()
-	bsOut:WriteByte(UnsignedChar(network_message.ID_INITIAL_STATE))
+	WriteByte(bsOut, network_message.ID_INITIAL_STATE)
 	WriteUint(bsOut, user_map:size())
 	
 	for i=1, #all_clients do
@@ -34,13 +34,51 @@ function client_class:constructor(owner_scene, guid)
 	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, guid, false)
 	
 	bsOut = BitStream()
-	bsOut:WriteByte(UnsignedChar(network_message.ID_NEW_PLAYER))
+	WriteByte(bsOut, network_message.ID_NEW_PLAYER)
 	WriteRakNetGUID(bsOut, guid)
 	
 	-- notify all others that the client was created
 	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, guid, true)
+	
+	self:set_update_rate(15)
+	self.update_timer = timer()
+			
+	table.insert(all_clients, self)
 end
 
+function client_class:set_update_rate(updates_per_second)
+	self.update_rate = updates_per_second
+	self.update_interval_ms = 1000/updates_per_second
+end
+
+
+function client_class:loop()
+	if self.update_timer:get_milliseconds() > self.update_interval_ms then
+		self.update_timer:reset()
+		
+		local bsOut = BitStream()
+		WriteByte(bsOut, network_message.ID_STATE_UPDATE)
+		
+		-- first always comes the client's body position and velocity
+		local this_body = self.controlled_character.parent_entity:get().physics.body
+		Writeb2Vec2(bsOut, this_body:GetPosition())
+		Writeb2Vec2(bsOut, this_body:GetLinearVelocity())
+		
+		-- then we inform about the other clients and their quantity
+		WriteUshort(bsOut, #all_clients-1)
+		for i=1, #all_clients do
+			if all_clients[i] ~= self then
+				local body = all_clients[i].controlled_character.parent_entity:get().physics.body
+				
+				WriteRakNetGUID(bsOut, all_clients[i].guid)
+				Writeb2Vec2(bsOut, body:GetPosition())
+				Writeb2Vec2(bsOut, body:GetLinearVelocity())
+			end
+		end
+		
+		server:send(bsOut, send_priority.IMMEDIATE_PRIORITY, send_reliability.UNRELIABLE_SEQUENCED, 0, self.guid, false)
+	end
+end
 
 function client_class:close_connection()
 	sample_scene.world_object.world:delete_entity(self.controlled_character.parent_entity:get(), nil)
@@ -54,7 +92,7 @@ function client_class:close_connection()
 	
 	local bsOut = BitStream()
 	print(network_message.ID_PLAYER_DISCONNECTED)
-	bsOut:WriteByte(UnsignedChar(network_message.ID_PLAYER_DISCONNECTED))
+	WriteByte(bsOut, network_message.ID_PLAYER_DISCONNECTED)
 	WriteRakNetGUID(bsOut, self.guid)
 	
 	-- notify all but disconnected one
