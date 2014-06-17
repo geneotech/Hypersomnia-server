@@ -1,7 +1,12 @@
-player_character = inherits_from ()
+player_character = inherits_from (entity_class)
 
 function player_character:constructor()
 
+end
+
+function player_character:handle_command(command_name)
+	local state; if string.sub(command_name, 1, 1) == "+" then state = 1 else state = 0 end
+	self.parent_entity:get().movement["moving_" .. string.sub(command_name, 2)] = state
 end
 
 function create_basic_player(owner_scene, position)
@@ -41,8 +46,8 @@ function create_basic_player(owner_scene, position)
 			}
 		}
 	}
-	
-	return player
+		
+	return owner_scene.world_object:create_entity_table(player.body, player_character)
 end
 
 
