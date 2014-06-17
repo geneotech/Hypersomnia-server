@@ -12,13 +12,14 @@ received = network_packet()
 
 user_map = guid_to_object_map()
 
-dofile "server\\client.lua"
 
 CLIENT_CODE_DIRECTORY = "..\\..\\Hypersomnia\\output\\hypersomnia\\"
 MAPS_DIRECTORY = CLIENT_CODE_DIRECTORY .. "data\\maps\\"
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\layers.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\filters.lua")
+
+dofile "server\\client.lua"
 
 dofile "server\\view\\input.lua"
 dofile "server\\view\\camera.lua"

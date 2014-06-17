@@ -27,7 +27,7 @@ return function(map_filename, scene_object)
 	end
 	
 	world.physics_system.enable_interpolation = 0
-	world.physics_system:configure_stepping(60, 5)
+	world.physics_system:configure_stepping(config_table.tickrate, 5)
 	
 	-- initialize input
 	world.input_system:clear_contexts()

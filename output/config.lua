@@ -9,7 +9,10 @@ config_table = {
 	resolution_h = 800,
 	doublebuffer = 1,
 	
-	sensitivity = vec2(2.5, 2.5)
+	sensitivity = vec2(2.5, 2.5),
+	
+	
+	tickrate = 66
 }
 
 if config_table.fullscreen == 1 then
