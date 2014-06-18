@@ -40,7 +40,7 @@ dofile "server\\game\\player.lua"
 
 SHOULD_QUIT_FLAG = false
 
-
+server:enable_lag(0.2, 100, 50)
 
 while not SHOULD_QUIT_FLAG do
 	if server:receive(received) then

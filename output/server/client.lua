@@ -40,7 +40,7 @@ function client_class:constructor(owner_scene, guid)
 	-- notify all others that the client was created
 	server:send(bsOut, send_priority.HIGH_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, guid, true)
 	
-	self:set_update_rate(15)
+	self:set_update_rate(30)
 	self.update_timer = timer()
 			
 	table.insert(all_clients, self)
