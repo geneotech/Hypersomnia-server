@@ -40,7 +40,13 @@ dofile "server\\game\\player.lua"
 
 SHOULD_QUIT_FLAG = false
 
-server:enable_lag(0.2, 100, 50)
+
+if config_table.simulate_lag ~= 0 then
+	print "Simulating lag..."
+	server:enable_lag(config_table.packet_loss, config_table.min_latency, config_table.jitter)
+end
+
+
 
 while not SHOULD_QUIT_FLAG do
 	if server:receive(received) then
