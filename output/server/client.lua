@@ -13,7 +13,7 @@ end
 
 function client_class:create_character(owner_scene, position)
 	-- create new entity here
-	self.controlled_character = create_basic_player(owner_scene, position)
+	self.controlled_character = create_basic_player(owner_scene, position).script
 end
 
 function client_class:pass_initial_state(client_array)
@@ -50,7 +50,7 @@ function client_class:loop(all_clients)
 		WriteByte(bsOut, network_message.ID_STATE_UPDATE)
 		
 		-- first always comes the client's body position and velocity
-		local this_body = self.controlled_character.parent_entity:get().physics.body
+		local this_body = self.controlled_character.parent_entity.physics.body
 		Writeb2Vec2(bsOut, this_body:GetPosition())
 		Writeb2Vec2(bsOut, this_body:GetLinearVelocity())
 		
@@ -58,7 +58,7 @@ function client_class:loop(all_clients)
 		WriteUshort(bsOut, #all_clients-1)
 		for i=1, #all_clients do
 			if all_clients[i] ~= self then
-				local body = all_clients[i].controlled_character.parent_entity:get().physics.body
+				local body = all_clients[i].controlled_character.parent_entity.physics.body
 				
 				WriteRakNetGUID(bsOut, all_clients[i].guid)
 				Writeb2Vec2(bsOut, body:GetPosition())
@@ -71,7 +71,7 @@ function client_class:loop(all_clients)
 end
 
 function client_class:close_connection(current_map)
-	current_map.world_object.world:delete_entity(self.controlled_character.parent_entity:get(), nil)
+	current_map.world_object.world:delete_entity(self.controlled_character.parent_entity, nil)
 	
 	local bsOut = BitStream()
 	print(network_message.ID_PLAYER_DISCONNECTED)

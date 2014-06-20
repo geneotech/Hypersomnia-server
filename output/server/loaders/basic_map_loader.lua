@@ -35,21 +35,23 @@ return function(map_filename, scene_object)
 	
 	-- initialize camera
 	scene_object.world_camera = create_world_camera_entity(world)
-	get_self(scene_object.world_camera).owner_scene = scene_object
+	scene_object.world_camera.script.owner_scene = scene_object
 	
-	scene_object.main_input_entity = world:create_entity_table(world:ptr_create_entity {
+	scene_object.main_input = world:create_entity {
 		input = {	
 			custom_intents.QUIT
+		},
+		
+		script = {
+			intent_message = function(self, message)
+				if message.intent == custom_intents.QUIT then
+					SHOULD_QUIT_FLAG = true
+				end		
+			end
 		}
-	})
+	}
 	
-	scene_object.teleport_position = objects_by_type["teleport_position"][1]
-	
-	scene_object.main_input_entity.intent_message = function(self, message)
-		if message.intent == custom_intents.QUIT then
-			SHOULD_QUIT_FLAG = true
-		end		
-	end
+	scene_object.teleport_position = objects_by_type["teleport_position"][1] 
 	
 	-- bind the atlas once
 	GL.glActiveTexture(GL.GL_TEXTURE0)
