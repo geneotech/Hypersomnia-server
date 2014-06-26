@@ -2,19 +2,17 @@ synchronization_system = inherits_from (processing_system)
 
 function synchronization_system:constructor() 
 	self.transmission_id_generator = id_generator_uint()
+	
+	processing_system.constructor(self)
 end
 
 function synchronization_system:get_required_components()
 	return { "synchronization" }
 end
 
-local function call_modules(entity, method, ...)
-
-end
-
 function synchronization_system:get_targets_in_proximity(subject_client)
 	-- here should follow proximity checks
-	return targets
+	return self.targets
 end
 
 function synchronization_system:write_object_state(object, output_bs)
@@ -36,32 +34,21 @@ function synchronization_system:update_state_for_client(subject_client, output_b
 	local proximity_targets = self:get_targets_in_proximity(subject_client)
 	
 	if #proximity_targets > 0 then
-		local new_objects = BitStream()
 		local out_of_date = BitStream()
-		local num_new_objects = 0
 		local num_out_of_date = 0
 		
 		for i=1, #proximity_targets do
 			local states = proximity_targets[i].synchronization.remote_states
 			local up_to_date = states[subject_client]
 			
-			-- if the object was not yet sent to the client
-			if up_to_date == nil then
-				self:write_object_state(proximity_targets[i], new_objects)
-				num_new_objects = num_new_objects + 1
-			elseif up_to_date == false then
+			-- if the object was not yet sent through reliable channel or is out of date
+			if up_to_date == nil or up_to_date == false then
 				self:write_object_state(proximity_targets[i], out_of_date)
 				num_out_of_date = num_out_of_date + 1
 			end
 			
-			-- right away mark as updated
+			-- outcome is always true
 			states[subject_client] = true
-		end
-	
-		if num_new_objects > 0 then
-			WriteByte(output_bs, protocol.messages.NEW_OBJECTS)
-			WriteUshort(output_bs, num_new_objects)
-			WriteBitstream(output_bs, new_objects)
 		end
 		
 		if num_out_of_date > 0 then	
@@ -81,8 +68,6 @@ function synchronization_system:update_streams_for_client(subject_client, output
 	local streamed_bs = BitStream()
 	local object_bs = BitStream()
 	
-	local ack_requested = false
-	
 	for i=1, #proximity_targets do
 		local sync = proximity_targets[i].synchronization
 		local modules = sync.modules
@@ -90,9 +75,7 @@ function synchronization_system:update_streams_for_client(subject_client, output
 		for j=1, #modules do
 			object_bs:Reset()
 			
-			if modules[j]:update_stream(object_bs) then
-				ack_requested = true	
-			end
+			modules[j]:update_stream(subject_client, object_bs) 
 			
 			if object_bs:size() > 0 then
 				WriteUint(streamed_bs, sync.id)
@@ -107,17 +90,11 @@ function synchronization_system:update_streams_for_client(subject_client, output
 		WriteUshort(output_bitstream, num_streamed_objects)
 		WriteBitstream(output_bitstream, streamed_bs)
 	end
-	
-	if ack_requested then 
-		return send_reliability.UNRELIABLE_SEQUENCED 
-	else
-		return send_reliability.UNRELIABLE_SEQUENCED_WITH_ACK_RECEIPT
-	end
 end
 
 function synchronization_system:delete_client_states(removed_client)
-	for i=1, #targets do
-		targets[i].synchronization.remote_states[removed_client] = nil
+	for i=1, #self.targets do
+		self.targets[i].synchronization.remote_states[removed_client] = nil
 	end
 end
 
@@ -137,7 +114,7 @@ function synchronization_system:remove_entity(removed_entity)
 	
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
 	for notified_client, state in pairs(remote_states) do
-		self.owner_entity_system.all_systems["client"]:send_reliable(output_bs, notified_client.client.guid)
+		notified_client.client.reliable_channel:post ( { output_bitstream = output_bs } )
 	end
 	
 	self.transmission_id_generator:release_id(removed_id)

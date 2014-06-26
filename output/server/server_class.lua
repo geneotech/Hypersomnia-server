@@ -1,13 +1,39 @@
+dofile "server\\world_archetypes\\world_archetypes.lua"
+
+dofile "server\\messages\\network_message.lua"
+dofile "server\\messages\\client_commands.lua"
+
+dofile "server\\components\\component.lua"
+
+dofile "server\\components\\client.lua"
+dofile "server\\components\\synchronization.lua"
+dofile "server\\components\\character.lua"
+
+dofile "server\\systems\\character_system.lua"
+dofile "server\\systems\\client_system.lua"
+dofile "server\\systems\\synchronization_system.lua"
+
 server_class = inherits_from()
 
 function server_class:constructor()
 	self.server = network_interface()
-	
 	self.received = network_packet()
-	
 	self.user_map = guid_to_object_map()
 
-	self.all_clients = {}
+	self.entity_system_instance = entity_system:create()
+	
+	self.entity_system_instance:register_messages {
+		"network_message",
+		"client_commands"
+	}
+	
+	-- create all necessary systems
+	self.systems = {}
+	self.systems.synchronization = synchronization_system:create()
+	self.systems.client = client_system:create(self.server)
+	self.systems.character = character_system:create()
+	
+	self.entity_system_instance:register_systems(self.systems)
 end
 
 function server_class:start(port, max_players, max_connections)
@@ -15,7 +41,7 @@ function server_class:start(port, max_players, max_connections)
 	
 	if config_table.simulate_lag ~= 0 then
 		print "Simulating lag..."
-		server:enable_lag(config_table.packet_loss, config_table.min_latency, config_table.jitter)
+		self.server:enable_lag(config_table.packet_loss, config_table.min_latency, config_table.jitter)
 	end
 end
 
@@ -30,24 +56,34 @@ function server_class:set_current_map(map_filename, loader_filename)
 	}
 end
 
-function server_class:new_client(guid)
-	local new_client = client_class:create(self.server, guid)
-	new_client:create_character(self.current_map, vec2(#self.all_clients*(-40), 0))
-	new_client:pass_initial_state(self.all_clients)
-	new_client:broadcast_new_client()
+function server_class:new_client(new_guid)
+	local world_character = world_archetypes.create_player(self.current_map, vec2(0, 0))
+
+	local client_modules = {}
+	table.insert(client_modules, sync_modules.movement:create(world_character))
 	
-	table.insert(self.all_clients, new_client)
+	local new_client = components.create_components {
+		client = {
+			guid = new_guid
+		},
+		
+		synchronization = {
+			modules = client_modules
+		},
+		
+		character = {
+			world_entity = world_character
+		}
+	}
 	
+	self.entity_system_instance:add_entity(new_client)
 	self.user_map:add(guid, new_client)		
 	
 	print "New client connected."
 end
 
-function server_class:remove_client(guid)
-	local removed_client = self.user_map:at(guid)
-	removed_client:close_connection(self.current_map)
-
-	table.erase(self.all_clients, removed_client)
+function server_class:remove_client(guid)	
+	self.entity_system_instance:remove_entity(self.user_map:at(guid))
 	self.user_map:remove(guid)
 	
 	print "A client has disconnected or lost the connection."
@@ -67,13 +103,17 @@ function server_class:loop()
 		elseif message_type == network_message.ID_CONNECTION_LOST then
 			self:remove_client(guid)
 		else
-			self.user_map:at(guid):handle_message(packet)
+			self.entity_system_instance:post(network_message:create { 
+				subject = user_map:at(guid),
+				data = packet
+			})
 		end
 	end
+
+	self.systems.client:update()
+	self.systems.character:update()
 	
-	for j=1, #self.all_clients do
-		self.all_clients[j]:loop(self.all_clients)
-	end
+	self.entity_system_instance:flush_messages()
 	
 	-- tick the game world
 	self.current_map:loop()

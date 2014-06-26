@@ -1,15 +1,4 @@
-player_character = inherits_from ()
-
-function player_character:constructor()
-
-end
-
-function player_character:handle_command(command_name)
-	local state; if string.sub(command_name, 1, 1) == "+" then state = 1 else state = 0 end
-	self.parent_entity.movement["moving_" .. string.sub(command_name, 2)] = state
-end
-
-function create_basic_player(owner_scene, position)
+world_archetypes.create_player = function(owner_scene, position)
 	return owner_scene.world_object:create_entity  {
 		render = {
 			layer = render_layers.PLAYERS,
@@ -41,9 +30,7 @@ function create_basic_player(owner_scene, position)
 			input_acceleration = vec2(5000, 5000),
 			air_resistance = 0.1,
 			braking_damping = 18
-		},
-		
-		script_class = player_character
+		}
 	}
 end
 

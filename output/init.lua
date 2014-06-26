@@ -11,13 +11,10 @@ MAPS_DIRECTORY = CLIENT_CODE_DIRECTORY .. "data\\maps\\"
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\layers.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\filters.lua")
 
-dofile "server\\client.lua"
-
 dofile "server\\view\\input.lua"
 dofile "server\\view\\camera.lua"
 
 dofile "server\\server_class.lua"
-dofile "server\\game\\player.lua"
 
 server = server_class:create()
 server:start(37017, 30, 60)
