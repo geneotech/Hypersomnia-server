@@ -76,8 +76,15 @@ function server_class:new_client(new_guid)
 		}
 	}
 	
-	self.entity_system_instance:add_entity(new_client)
-	self.user_map:add(guid, new_client)		
+	self.entity_system_instance:add_entity(new_client)	
+	self.user_map:add(guid, new_client)
+	
+	local output_bs = BitStream()
+	WriteByte(output_bs, protocol.messages.INITIAL_DATA)
+	WriteUshort(output_bs, new_client.synchronization.id)
+	
+	-- post a reliable message with an id of the synchronization object the client will control
+	new_client.reliable_sender:post_bitstream(output_bs)
 	
 	print "New client connected."
 end
@@ -102,7 +109,7 @@ function server_class:loop()
 			self:remove_client(guid)
 		elseif message_type == network_message.ID_CONNECTION_LOST then
 			self:remove_client(guid)
-		else
+		elseif message_type == protocol.GAME_TRANSMISSION then
 			self.entity_system_instance:post(network_message:create { 
 				subject = user_map:at(guid),
 				data = packet
@@ -110,8 +117,14 @@ function server_class:loop()
 		end
 	end
 
-	self.systems.client:update()
+	self.systems.client:handle_incoming_commands()
+	
+	-- some systems may post reliable commands because of the incoming network messages
 	self.systems.character:update()
+
+	
+	-- after all reliable messages were possibly posted, do the update tick
+	self.systems.client:update_tick()
 	
 	self.entity_system_instance:flush_messages()
 	

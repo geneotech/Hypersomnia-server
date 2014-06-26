@@ -30,7 +30,7 @@ function synchronization_system:write_object_state(object, output_bs)
 	end
 end
 
-function synchronization_system:update_state_for_client(subject_client, output_bs)
+function synchronization_system:update_state_for_client(subject_client)
 	local proximity_targets = self:get_targets_in_proximity(subject_client)
 	
 	if #proximity_targets > 0 then
@@ -52,9 +52,13 @@ function synchronization_system:update_state_for_client(subject_client, output_b
 		end
 		
 		if num_out_of_date > 0 then	
+			local output_bs = BitStream()
+			
 			WriteByte(output_bs, protocol.messages.STATE_UPDATE)
 			WriteUshort(output_bs, num_out_of_date)
 			WriteBitstream(output_bs, out_of_date)
+			
+			subject_client.client.net_channel:post_bitstream(output_bs)
 		end
 	end
 end
@@ -114,7 +118,7 @@ function synchronization_system:remove_entity(removed_entity)
 	
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
 	for notified_client, state in pairs(remote_states) do
-		notified_client.client.reliable_channel:post ( { output_bitstream = output_bs } )
+		notified_client.client.net_channel:post_bitstream(output_bs)
 	end
 	
 	self.transmission_id_generator:release_id(removed_id)

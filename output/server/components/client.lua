@@ -5,14 +5,9 @@ function components.client:constructor(init)
 
 	self:set_rate("update", 30)
 	
-	-- succesfully read a reliable set of commands;
-	-- send an acknowledgement on the next update even if there is no data to send.
-	self.ack_requested = false
-	
 	self.update_timer = timer()
 	
-	self.reliable_sender = reliable_sender_class:create()
-	self.reliable_receiver = reliable_receiver()
+	self.net_channel = reliable_channel:create()
 end
 
 function components.client:set_rate(what_rate, updates_per_second)
