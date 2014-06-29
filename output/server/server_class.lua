@@ -1,17 +1,22 @@
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\protocol.lua")
+
 dofile "server\\world_archetypes\\world_archetypes.lua"
 
 dofile "server\\messages\\network_message.lua"
 dofile "server\\messages\\client_commands.lua"
 
-dofile "server\\components\\component.lua"
-
 dofile "server\\components\\client.lua"
 dofile "server\\components\\synchronization.lua"
 dofile "server\\components\\character.lua"
 
+
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
+
 dofile "server\\systems\\character_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\synchronization_system.lua"
+
 
 server_class = inherits_from()
 
@@ -71,20 +76,13 @@ function server_class:new_client(new_guid)
 			modules = client_modules
 		},
 		
-		character = {
-			world_entity = world_character
-		}
+		character = {},
+		
+		cpp_entity = world_character
 	}
 	
 	self.entity_system_instance:add_entity(new_client)	
-	self.user_map:add(guid, new_client)
-	
-	local output_bs = BitStream()
-	WriteByte(output_bs, protocol.messages.INITIAL_DATA)
-	WriteUshort(output_bs, new_client.synchronization.id)
-	
-	-- post a reliable message with an id of the synchronization object the client will control
-	new_client.reliable_sender:post_bitstream(output_bs)
+	self.user_map:add(new_guid, new_client)
 	
 	print "New client connected."
 end
@@ -103,15 +101,15 @@ function server_class:loop()
 		local message_type = packet:byte(0)
 		local guid = packet:guid()
 		
-		if message_type == network_message.ID_NEW_INCOMING_CONNECTION then
+		if message_type == network_event.ID_NEW_INCOMING_CONNECTION then
 			self:new_client(guid)
-		elseif message_type == network_message.ID_DISCONNECTION_NOTIFICATION then
+		elseif message_type == network_event.ID_DISCONNECTION_NOTIFICATION then
 			self:remove_client(guid)
-		elseif message_type == network_message.ID_CONNECTION_LOST then
+		elseif message_type == network_event.ID_CONNECTION_LOST then
 			self:remove_client(guid)
 		elseif message_type == protocol.GAME_TRANSMISSION then
 			self.entity_system_instance:post(network_message:create { 
-				subject = user_map:at(guid),
+				subject = self.user_map:at(guid),
 				data = packet
 			})
 		end

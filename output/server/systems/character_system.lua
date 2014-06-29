@@ -16,12 +16,11 @@ function character_system:update()
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
-		local character = msg.subject.character
 		
-		local input_bs = msg:get_command_bitstream()
+		local input_bs = msg:get_bitstream()
 		
-		if character ~= nil then
-			while input_bs:GetNumberOfUnreadBits() > 0 do
+		if msg.subject.character ~= nil then
+			while input_bs:GetNumberOfUnreadBits() >= 8 do
 				local message_type = input_bs:ReadByte()
 				
 				if message_type == protocol.message.COMMAND then	
@@ -32,7 +31,7 @@ function character_system:update()
 					
 					if string.sub(command_name, 1, 1) == "+" then state = 1 else state = 0 end
 					
-					character.world_entity.movement["moving_" .. string.sub(command_name, 2)] = state
+					msg.subject.cpp_entity.movement["moving_" .. string.sub(command_name, 2)] = state
 				end
 			end
 		end

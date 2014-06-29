@@ -1,6 +1,3 @@
-dofile "server\\components\\sync_modules\\modules.lua"
-dofile "server\\components\\sync_modules\\movement_sync.lua"
-
 components.synchronization = inherits_from()
 
 function components.synchronization:constructor(init)

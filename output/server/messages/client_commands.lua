@@ -1,11 +1,11 @@
-client_command = inherits_from ()
+client_commands = inherits_from ()
 
-function client_command:create(init)
+function client_commands:constructor(init)
 	self.name = "client_commands"
 	self.subject = init.subject
-	self.command_bitstream = init.command_bitstream
+	self.bitstream = init.bitstream
 end
 
-function client_command:get_command_bitstream()
-	return copy_bitstream_for_reading(self.input_bs)
+function client_commands:get_bitstream()
+	return copy_bitstream_for_reading(self.bitstream)
 end

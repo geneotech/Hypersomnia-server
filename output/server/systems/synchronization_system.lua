@@ -1,7 +1,7 @@
 synchronization_system = inherits_from (processing_system)
 
 function synchronization_system:constructor() 
-	self.transmission_id_generator = id_generator_uint()
+	self.transmission_id_generator = id_generator_ushort()
 	
 	processing_system.constructor(self)
 end
@@ -16,9 +16,12 @@ function synchronization_system:get_targets_in_proximity(subject_client)
 end
 
 function synchronization_system:write_object_state(object, output_bs)
-	WriteUint(output_bs, object.synchronization.id)
+	WriteUshort(output_bs, object.synchronization.id)
 	
-	-- write a bitfield describing what modules the entity has
+	-- write a bitfield describing what modules have changed
+	-- on the first transmission all modules will have changed, inducing their creation on the client
+	
+	-- now just write all modules
 	for i=1, #protocol.module_mappings do
 		WriteBit(output_bs, bool2int(object.synchronization.modules[protocol.module_mappings[i]] ~= nil))
 	end
@@ -52,6 +55,7 @@ function synchronization_system:update_state_for_client(subject_client)
 		end
 		
 		if num_out_of_date > 0 then	
+			print(num_out_of_date)
 			local output_bs = BitStream()
 			
 			WriteByte(output_bs, protocol.messages.STATE_UPDATE)
@@ -82,7 +86,7 @@ function synchronization_system:update_streams_for_client(subject_client, output
 			modules[j]:update_stream(subject_client, object_bs) 
 			
 			if object_bs:size() > 0 then
-				WriteUint(streamed_bs, sync.id)
+				WriteUshort(streamed_bs, sync.id)
 				WriteBitstream(streamed_bs, object_bs)
 				num_streamed_objects = num_streamed_objects + 1
 			end
@@ -104,6 +108,17 @@ end
 
 function synchronization_system:add_entity(new_entity)
 	new_entity.synchronization.id = self.transmission_id_generator:generate_id()
+	
+	if new_entity.client ~= nil then
+		-- post a reliable message with an id of the synchronization object the client will control
+		
+		local output_bs = BitStream()
+		WriteByte(output_bs, protocol.messages.ASSIGN_SYNC_ID)
+		WriteUshort(output_bs, new_entity.synchronization.id)
+		
+		new_entity.client.net_channel:post_bitstream(output_bs)
+	end
+	
 	processing_system.add_entity(self, removed_entity)
 end
 

@@ -29,24 +29,19 @@ function client_system:handle_incoming_commands()
 		local client = msg.subject.client		
 		local input_bs = msg.data:get_bitstream()
 		
-		local recv_result = client.net_channel:recv(input_bs)
-		
-		-- if there are some commands to be read from the client
-		if recv_result == receive_result.RELIABLE_RECEIVED then
-		
+		-- if there are some commands or streams to be read from the client
+		if client.net_channel:recv(input_bs) ~= receive_result.NOTHING_RECEIVED then
 			self.entity_system_instance:post( client_commands:create { 
 				subject = msg.subject,
-				command_bitstream = input_bs
+				bitstream = input_bs
 			})		
-			-- now read unreliable messages if any
-		elseif recv_result == receive_result.ONLY_UNRELIABLE_RECEIVED then
-		
-		end	
-		
+		end
 	end
 end
 
 function client_system:update_tick()
+	local synchronization = self.owner_entity_system.all_systems["synchronization"]
+	
 	for i=1, #self.targets do
 		local client = self.targets[i].client
 		
@@ -59,8 +54,8 @@ function client_system:update_tick()
 			synchronization:update_state_for_client(self.targets[i])
 			
 			-- streams may post a reliable event: "sleep" event for example
-			client.reliable_sender.unreliable_buf:Reset()
-			synchronization:update_streams_for_client(self.targets[i], client.reliable_sender.unreliable_buf)
+			client.net_channel.unreliable_buf:Reset()
+			synchronization:update_streams_for_client(self.targets[i], client.net_channel.unreliable_buf)
 			
 			local output_bs = client.net_channel:write_data()
 			
