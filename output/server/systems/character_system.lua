@@ -23,9 +23,9 @@ function character_system:update()
 			while input_bs:GetNumberOfUnreadBits() >= 8 do
 				local message_type = input_bs:ReadByte()
 				
-				if message_type == protocol.message.COMMAND then	
+				if message_type == protocol.messages.COMMAND then	
 					-- handle movement
-					local command_name = command_to_name[input_bs:ReadByte()]
+					local command_name = protocol.command_to_name[input_bs:ReadByte()]
 					
 					local state; 
 					

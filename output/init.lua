@@ -1,3 +1,6 @@
+
+global_logfile = io.open("server_logfile.txt", "w")
+
 dofile "config.lua"
 
 print "Initialization successful."
@@ -25,3 +28,4 @@ SHOULD_QUIT_FLAG = false
 while not SHOULD_QUIT_FLAG do
 	server:loop()
 end
+global_logfile:close()

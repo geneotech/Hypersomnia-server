@@ -7,7 +7,7 @@ function components.client:constructor(init)
 	
 	self.update_timer = timer()
 	
-	self.net_channel = reliable_channel:create()
+	self.net_channel = reliable_channel_wrapper:create()
 end
 
 function components.client:set_rate(what_rate, updates_per_second)

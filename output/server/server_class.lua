@@ -17,7 +17,6 @@ dofile "server\\systems\\character_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\synchronization_system.lua"
 
-
 server_class = inherits_from()
 
 function server_class:constructor()
@@ -65,7 +64,7 @@ function server_class:new_client(new_guid)
 	local world_character = world_archetypes.create_player(self.current_map, vec2(0, 0))
 
 	local client_modules = {}
-	table.insert(client_modules, sync_modules.movement:create(world_character))
+	client_modules["movement"] = sync_modules.movement:create()
 	
 	local new_client = components.create_components {
 		client = {

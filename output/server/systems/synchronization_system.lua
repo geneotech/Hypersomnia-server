@@ -16,13 +16,16 @@ function synchronization_system:get_targets_in_proximity(subject_client)
 end
 
 function synchronization_system:write_object_state(object, output_bs)
+	output_bs:name_property("object_id")
 	output_bs:WriteUshort(object.synchronization.id)
 	
 	-- write a bitfield describing what modules have changed
 	-- on the first transmission all modules will have changed, inducing their creation on the client
 	
 	-- now just write all modules
+		
 	for i=1, #protocol.module_mappings do
+		output_bs:name_property("has module " .. i)
 		output_bs:WriteBit(object.synchronization.modules[protocol.module_mappings[i]] ~= nil)
 	end
 	
@@ -58,8 +61,11 @@ function synchronization_system:update_state_for_client(subject_client)
 			print(num_out_of_date)
 			local output_bs = BitStream()
 			
+			output_bs:name_property("STATE_UPDATE")
 			output_bs:WriteByte(protocol.messages.STATE_UPDATE)
+			output_bs:name_property("object_count")
 			output_bs:WriteUshort(num_out_of_date)
+			output_bs:name_property("all objects")
 			output_bs:WriteBitstream(out_of_date)
 			
 			subject_client.client.net_channel:post_bitstream(output_bs)
@@ -80,22 +86,31 @@ function synchronization_system:update_streams_for_client(subject_client, output
 		local sync = proximity_targets[i].synchronization
 		local modules = sync.modules
 		
-		for j=1, #modules do
-			object_bs:Reset()
-			
-			modules[j]:write_stream(subject_client, object_bs) 
-			
-			if object_bs:size() > 0 then
-				streamed_bs:WriteUshort(sync.id)
-				streamed_bs:WriteBitstream(object_bs)
-				num_streamed_objects = num_streamed_objects + 1
+		for i=1, #protocol.module_mappings do
+			local stream_module = modules[protocol.module_mappings[i]]
+			if stream_module ~= nil then
+				object_bs:Reset()
+				
+				stream_module:write_stream(subject_client, object_bs) 
+				
+				if object_bs:size() > 0 then
+					streamed_bs:name_property("object_id")
+					streamed_bs:WriteUshort(sync.id)
+					streamed_bs:name_property("object_data")
+					streamed_bs:WriteBitstream(object_bs)
+					num_streamed_objects = num_streamed_objects + 1
+				end
 			end
 		end
 	end
 	
 	-- if anything needs streaming at all
 	if num_streamed_objects > 0 then
+		output_bitstream:name_property("STREAM_UPDATE")
+		output_bitstream:WriteByte(protocol.messages.STREAM_UPDATE)	
+		output_bitstream:name_property("streamed_count")
 		output_bitstream:WriteUshort(num_streamed_objects)
+		output_bitstream:name_property("streamed objects")
 		output_bitstream:WriteBitstream(streamed_bs)
 	end
 end
@@ -113,7 +128,9 @@ function synchronization_system:add_entity(new_entity)
 		-- post a reliable message with an id of the synchronization object the client will control
 		
 		local output_bs = BitStream()
+		output_bs:name_property("ASSIGN_SYNC_ID")
 		output_bs:WriteByte(protocol.messages.ASSIGN_SYNC_ID)
+		output_bs:name_property("client_id")
 		output_bs:WriteUshort(new_entity.synchronization.id)
 		
 		new_entity.client.net_channel:post_bitstream(output_bs)
@@ -126,7 +143,9 @@ function synchronization_system:remove_entity(removed_entity)
 	local removed_id = removed_entity.synchronization.id
 print("removing")
 	local output_bs = BitStream()
+	output_bs:name_property("DELETE_OBJECT")
 	output_bs:WriteByte(protocol.message.DELETE_OBJECT)
+	output_bs:name_property("removed_id")
 	output_bs:WriteUint(removed_id)
 	
 	local remote_states = removed_entity.synchronization.remote_states
