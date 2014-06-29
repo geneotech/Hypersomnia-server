@@ -141,10 +141,10 @@ end
 
 function synchronization_system:remove_entity(removed_entity)
 	local removed_id = removed_entity.synchronization.id
-print("removing")
+	
 	local output_bs = BitStream()
 	output_bs:name_property("DELETE_OBJECT")
-	output_bs:WriteByte(protocol.message.DELETE_OBJECT)
+	output_bs:WriteByte(protocol.messages.DELETE_OBJECT)
 	output_bs:name_property("removed_id")
 	output_bs:WriteUint(removed_id)
 	

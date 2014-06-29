@@ -87,6 +87,7 @@ function server_class:new_client(new_guid)
 end
 
 function server_class:remove_client(guid)	
+	print(table.inspect(self.user_map:at(guid)))
 	self.entity_system_instance:remove_entity(self.user_map:at(guid))
 	self.user_map:remove(guid)
 	

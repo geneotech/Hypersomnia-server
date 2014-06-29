@@ -4,13 +4,6 @@ function character_system:get_required_components()
 	return { "character" }
 end
 
-function character_system:remove_entity(removed_entity)
-	local world_entity = removed_entity.character.world_entity
-	world_entity.owner_world:delete_entity(world_entity, nil)
-	
-	processing_system.remove_entity(self, removed_entity)
-end
-
 function character_system:update()
 	local msgs = self.owner_entity_system.messages["client_commands"]
 	
