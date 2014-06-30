@@ -14,8 +14,8 @@ config_table = {
 	
 	tickrate = 66,
 	
-	simulate_lag = 0,
-	packet_loss = 0.1,
+	simulate_lag = 1,
+	packet_loss = 0.03,
 	min_latency = 100,
 	jitter = 50
 }

@@ -51,14 +51,12 @@ function synchronization_system:update_state_for_client(subject_client)
 			if up_to_date == nil or up_to_date == false then
 				self:write_object_state(proximity_targets[i], out_of_date)
 				num_out_of_date = num_out_of_date + 1
-			end
 			
-			-- outcome is always true
-			states[subject_client] = true
+			end			
+				states[subject_client] = true
 		end
 		
 		if num_out_of_date > 0 then	
-			print(num_out_of_date)
 			local output_bs = BitStream()
 			
 			output_bs:name_property("STATE_UPDATE")
@@ -86,12 +84,12 @@ function synchronization_system:update_streams_for_client(subject_client, output
 		local sync = proximity_targets[i].synchronization
 		local modules = sync.modules
 		
-		for i=1, #protocol.module_mappings do
-			local stream_module = modules[protocol.module_mappings[i]]
+		for j=1, #protocol.module_mappings do
+			local stream_module = modules[protocol.module_mappings[j]]
 			if stream_module ~= nil then
 				object_bs:Reset()
 				
-				stream_module:write_stream(subject_client, object_bs) 
+				stream_module:write_stream(proximity_targets[i], object_bs) 
 				
 				if object_bs:size() > 0 then
 					streamed_bs:name_property("object_id")
@@ -146,12 +144,14 @@ function synchronization_system:remove_entity(removed_entity)
 	output_bs:name_property("DELETE_OBJECT")
 	output_bs:WriteByte(protocol.messages.DELETE_OBJECT)
 	output_bs:name_property("removed_id")
-	output_bs:WriteUint(removed_id)
+	output_bs:WriteUshort(removed_id)
 	
+	print ("removing " .. removed_id) 
 	local remote_states = removed_entity.synchronization.remote_states
 	
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
 	for notified_client, state in pairs(remote_states) do
+		print ("sending notification to " .. notified_client.synchronization.id)
 		notified_client.client.net_channel:post_bitstream(output_bs)
 	end
 	

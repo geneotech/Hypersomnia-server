@@ -31,6 +31,10 @@ function client_system:handle_incoming_commands()
 		
 		-- if there are some commands or streams to be read from the client
 		if client.net_channel:recv(input_bs) ~= receive_result.NOTHING_RECEIVED then
+				local outstr = ("Receiving " .. input_bs:size() .. " bits: \n\n" .. auto_string_indent(input_bs.read_report) .. "\n\n")
+				global_logfile:write(outstr)
+				print(outstr)
+				
 			self.owner_entity_system:post( client_commands:create { 
 				subject = msg.subject,
 				bitstream = input_bs
@@ -60,11 +64,11 @@ function client_system:update_tick()
 			local output_bs = client.net_channel:send()
 			
 			if output_bs:size() > 0 then
-				--if client.net_channel.sender.reliable_buf:size() > 0 then
+				if client.net_channel.sender.reliable_buf:size() > 0 then
 				local outstr = ("Sending " .. output_bs:size() .. " bits: \n\n" .. auto_string_indent(output_bs.content) .. "\n\n")
 				global_logfile:write(outstr)
 				print(outstr)
-				--end
+				end
 				self.network:send(output_bs, send_priority.IMMEDIATE_PRIORITY, send_reliability.UNRELIABLE, 0, client.guid, false)
 			end
 		end
