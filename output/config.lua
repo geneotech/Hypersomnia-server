@@ -16,8 +16,8 @@ config_table = {
 	
 	simulate_lag = 1,
 	packet_loss = 0.03,
-	min_latency = 100,
-	jitter = 50
+	min_latency = 50,
+	jitter = 5
 }
 
 if config_table.fullscreen == 1 then
