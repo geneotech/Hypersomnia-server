@@ -11,8 +11,6 @@ function character_system:get_required_components()
 end
 
 function character_system:substep()
-	global_logfile:write(("Step number.." .. self.steps .. "\n"))
-	
 	self.steps = self.steps + 1
 	for i=1, #self.targets do
 		local character = self.targets[i].character 
@@ -28,13 +26,6 @@ function character_system:substep()
 			movement.moving_right = command.moving_right
 			movement.moving_forward = command.moving_forward
 			movement.moving_backward = command.moving_backward
-			
-			global_logfile:write(("Applying inputs.. buffered: " .. #commands))
-			global_logfile:write(("\nLeft:" .. movement.moving_left))
-			global_logfile:write(("\nRight:" .. movement.moving_right))
-			global_logfile:write(("\nForward:" .. movement.moving_forward))
-			global_logfile:write(("\nBackward:" .. movement.moving_backward))
-			global_logfile:write("\n")
 			
 			character.at_step = command.step_number
 		else
