@@ -30,29 +30,39 @@ function character_system:update()
 					msg.subject.cpp_entity.movement["moving_" .. string.sub(command_name, 2)] = state
 				elseif message_type == protocol.messages.CLIENT_PREDICTION then
 					input_bs:name_property("input_sequence")
-					local input_sequence = input_bs:ReadUshort()
+					local input_sequence = input_bs:ReadUint()
 					input_bs:name_property("predicted_pos")
 					local predicted_pos = to_pixels(input_bs:Readb2Vec2())
 					
 					if character.last_input_sequence == nil or character.last_input_sequence ~= input_sequence then
 						character.last_input_sequence = input_sequence
-						local accepted_divergence = 30
+						local accepted_divergence = 15
 						
 						-- if the difference predicted position and actual player position is above certain threshold,
 						-- inform him about it
 						local actual_pos = msg.subject.cpp_entity.transform.current.pos
-						if (predicted_pos - actual_pos):length_sq() > accepted_divergence*accepted_divergence then
+						--if (predicted_pos - actual_pos):length_sq() > accepted_divergence*accepted_divergence then
 							character.commands:Reset()
 							character.commands:name_property("CLIENT_PREDICTION")
 							character.commands:WriteByte(protocol.messages.CLIENT_PREDICTION)
 							character.commands:name_property("input_sequence")
-							character.commands:WriteUshort(input_sequence)
+							character.commands:WriteUint(input_sequence)
 							character.commands:name_property("actual_position")
 							character.commands:Writeb2Vec2(msg.subject.cpp_entity.physics.body:GetPosition())
 							character.commands:name_property("actual_velocity")
 							character.commands:Writeb2Vec2(msg.subject.cpp_entity.physics.body:GetLinearVelocity())
 							
-						end	
+							local left = msg.subject.cpp_entity.movement.moving_left > 0
+							local right = msg.subject.cpp_entity.movement.moving_left > 0
+							local forward = msg.subject.cpp_entity.movement.moving_left > 0
+							local back = msg.subject.cpp_entity.movement.moving_left > 0
+							
+							character.commands:WriteBit(left)
+							character.commands:WriteBit(right)
+							character.commands:WriteBit(forward)
+							character.commands:WriteBit(back)
+							
+						--end	
 					end
 				end
 			end
