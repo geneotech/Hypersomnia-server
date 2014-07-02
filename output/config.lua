@@ -12,12 +12,12 @@ config_table = {
 	sensitivity = vec2(2.5, 2.5),
 	
 	
-	tickrate = 66,
+	tickrate = 120,
 	
 	simulate_lag = 1,
-	packet_loss = 0.03,
-	min_latency = 50,
-	jitter = 5
+	packet_loss = 0.0,
+	min_latency = 250,
+	jitter = 0
 }
 
 if config_table.fullscreen == 1 then

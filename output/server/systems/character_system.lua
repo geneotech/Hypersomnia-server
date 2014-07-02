@@ -33,24 +33,27 @@ function character_system:update()
 					local input_sequence = input_bs:ReadUshort()
 					input_bs:name_property("predicted_pos")
 					local predicted_pos = to_pixels(input_bs:Readb2Vec2())
-					local accepted_divergence = 10
 					
-					-- if the difference predicted position and actual player position is above certain threshold,
-					-- inform him about it
-					local actual_pos = msg.subject.cpp_entity.transform.current.pos
-					if (predicted_pos - actual_pos):length_sq() > accepted_divergence*accepted_divergence then
-						character.commands:Reset()
-						character.commands:name_property("CLIENT_PREDICTION")
-						character.commands:WriteByte(protocol.messages.CLIENT_PREDICTION)
-						character.commands:name_property("input_sequence")
-						character.commands:WriteUshort(input_sequence)
-						character.commands:name_property("actual_position")
-						character.commands:Writeb2Vec2(msg.subject.cpp_entity.physics.body:GetPosition())
-						character.commands:name_property("actual_velocity")
-						character.commands:Writeb2Vec2(msg.subject.cpp_entity.physics.body:GetLinearVelocity())
-					end					
-					
-					print(input_bs.read_report)
+					if character.last_input_sequence == nil or character.last_input_sequence ~= input_sequence then
+						character.last_input_sequence = input_sequence
+						local accepted_divergence = 30
+						
+						-- if the difference predicted position and actual player position is above certain threshold,
+						-- inform him about it
+						local actual_pos = msg.subject.cpp_entity.transform.current.pos
+						if (predicted_pos - actual_pos):length_sq() > accepted_divergence*accepted_divergence then
+							character.commands:Reset()
+							character.commands:name_property("CLIENT_PREDICTION")
+							character.commands:WriteByte(protocol.messages.CLIENT_PREDICTION)
+							character.commands:name_property("input_sequence")
+							character.commands:WriteUshort(input_sequence)
+							character.commands:name_property("actual_position")
+							character.commands:Writeb2Vec2(msg.subject.cpp_entity.physics.body:GetPosition())
+							character.commands:name_property("actual_velocity")
+							character.commands:Writeb2Vec2(msg.subject.cpp_entity.physics.body:GetLinearVelocity())
+							
+						end	
+					end
 				end
 			end
 		end

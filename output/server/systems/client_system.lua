@@ -60,16 +60,18 @@ function client_system:update_tick()
 			-- streams may post a reliable event: "sleep" event for example
 			client.net_channel.unreliable_buf:Reset()
 			client.net_channel.unreliable_buf:WriteBitstream(self.targets[i].character.commands)
+			self.targets[i].character.commands:Reset()
+			
 			synchronization:update_streams_for_client(self.targets[i], client.net_channel.unreliable_buf)
 			
 			local output_bs = client.net_channel:send()
 			
 			if output_bs:size() > 0 then
-				if client.net_channel.sender.reliable_buf:size() > 0 then
+				--if client.net_channel.sender.reliable_buf:size() > 0 then
 				local outstr = ("Sending " .. output_bs:size() .. " bits: \n\n" .. auto_string_indent(output_bs.content) .. "\n\n")
 				global_logfile:write(outstr)
 				--print(outstr)
-				end
+				--end
 				self.network:send(output_bs, send_priority.IMMEDIATE_PRIORITY, send_reliability.UNRELIABLE, 0, client.guid, false)
 			end
 		end
