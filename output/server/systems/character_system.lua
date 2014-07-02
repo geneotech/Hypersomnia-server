@@ -64,17 +64,7 @@ function character_system:update()
 				input_bs:name_property("message_type")
 				local message_type = input_bs:ReadByte()
 				
-				if message_type == protocol.messages.COMMAND then	
-					-- handle movement
-					input_bs:name_property("command_id")
-					local command_name = protocol.command_to_name[input_bs:ReadByte()]
-					
-					local state; 
-					
-					if string.sub(command_name, 1, 1) == "+" then state = 1 else state = 0 end
-					
-					--msg.subject.cpp_entity.movement["moving_" .. string.sub(command_name, 2)] = state
-				elseif message_type == protocol.messages.INPUT_SNAPSHOT then
+				if message_type == protocol.messages.INPUT_SNAPSHOT then
 					local new_command = {}
 					
 					new_command.step_number = input_bs:ReadUint()
