@@ -58,6 +58,10 @@ function server_class:set_current_map(map_filename, loader_filename)
 		color = rgba(0, 255, 0, 255),
 		size = vec2(37, 37)
 	}
+	
+	table.insert(self.current_map.world_object.substep_callbacks, function()
+		self.systems.character:substep()
+	end)
 end
 
 function server_class:new_client(new_guid)
