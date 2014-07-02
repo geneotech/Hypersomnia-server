@@ -2,7 +2,7 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\reliable_channel.lua")
 
 client_system = inherits_from (processing_system)
 
-function client_system:constructor(network) 
+function client_system:constructor(network)
 	self.network = network
 	
 	processing_system.constructor(self)
@@ -26,7 +26,7 @@ function client_system:handle_incoming_commands()
 	for i=1, #msgs do
 		local msg = msgs[i] 
 
-		local client = msg.subject.client		
+		local client = msg.subject.client
 		local input_bs = msg.data:get_bitstream()
 		
 		-- if there are some commands or streams to be read from the client
@@ -59,7 +59,10 @@ function client_system:update_tick()
 			
 			-- streams may post a reliable event: "sleep" event for example
 			client.net_channel.unreliable_buf:Reset()
-			client.net_channel.unreliable_buf:WriteBitstream(self.targets[i].character.commands)
+			client.net_channel.unreliable_buf:WriteByte(protocol.messages.CLIENT_PREDICTION)
+			client.net_channel.unreliable_buf:WriteUint(self.targets[i].character.at_step)
+			client.net_channel.unreliable_buf:Writeb2Vec2(self.targets[i].cpp_entity.physics.body:GetPosition())
+			client.net_channel.unreliable_buf:Writeb2Vec2(self.targets[i].cpp_entity.physics.body:GetLinearVelocity())
 			self.targets[i].character.commands:Reset()
 			
 			synchronization:update_streams_for_client(self.targets[i], client.net_channel.unreliable_buf)
