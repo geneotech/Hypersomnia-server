@@ -69,7 +69,6 @@ function server_class:new_client(new_guid)
 
 	local client_modules = {}
 	client_modules["movement"] = sync_modules.movement:create()
-	client_modules["movement"].property = 21
 	
 	local new_client = components.create_components {
 		client = {
@@ -88,11 +87,10 @@ function server_class:new_client(new_guid)
 	
 	self.entity_system_instance:add_entity(new_client)	
 	
-	local client_specific_modules = {}
-	client_specific_modules["movement"] = sync_modules.movement:create()
-	client_specific_modules["movement"].property = 31
-	
-	new_client.client.alternative_modules[new_client.synchronization.id] = client_specific_modules
+	--local client_specific_modules = {}
+	--client_specific_modules["movement"] = sync_modules.movement:create()
+	--
+	--new_client.client.alternative_modules[new_client.synchronization.id] = client_specific_modules
 	
 	self.user_map:add(new_guid, new_client)
 	
