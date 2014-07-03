@@ -15,9 +15,9 @@ function synchronization_system:get_targets_in_proximity(subject_client)
 	return self.targets
 end
 
-function synchronization_system:write_object_state(object, output_bs)
+function synchronization_system:write_object_state(id, module_set, output_bs)
 	output_bs:name_property("object_id")
-	output_bs:WriteUshort(object.synchronization.id)
+	output_bs:WriteUshort(id)
 	
 	-- write a bitfield describing what modules have changed
 	-- on the first transmission all modules will have changed, inducing their creation on the client
@@ -26,13 +26,14 @@ function synchronization_system:write_object_state(object, output_bs)
 		
 	for i=1, #protocol.module_mappings do
 		output_bs:name_property("has module " .. i)
-		output_bs:WriteBit(object.synchronization.modules[protocol.module_mappings[i]] ~= nil)
-	end
-	
-	local modules = object.synchronization.modules
-	
-	for i=1, #modules do
-		modules[i]:write_state(output_bs)
+		
+		local module_object = module_set[protocol.module_mappings[i]]
+		
+		output_bs:WriteBit(module_object ~= nil)
+		
+		if module_object ~= nil then
+			module_object:write_state(output_bs)
+		end
 	end
 end
 
@@ -44,12 +45,23 @@ function synchronization_system:update_state_for_client(subject_client)
 		local num_out_of_date = 0
 		
 		for i=1, #proximity_targets do
-			local states = proximity_targets[i].synchronization.remote_states
+			local target = proximity_targets[i]
+			local sync = target.synchronization
+			local id = sync.id
+			local states = sync.remote_states
 			local up_to_date = states[subject_client]
 			
 			-- if the object was not yet sent through reliable channel or is out of date
 			if up_to_date == nil or up_to_date == false then
-				self:write_object_state(proximity_targets[i], out_of_date)
+				-- switch to an alternative module set if the client component provides one
+				local alternative_modules = subject_client.client.alternative_modules[id]
+				
+				if alternative_modules ~= nil then
+					self:write_object_state(id, alternative_modules, out_of_date)
+				else
+					self:write_object_state(id, sync.modules, out_of_date)
+				end
+			
 				num_out_of_date = num_out_of_date + 1
 			
 			end			
@@ -80,7 +92,12 @@ function synchronization_system:update_streams_for_client(subject_client, output
 	
 	for i=1, #proximity_targets do
 		local sync = proximity_targets[i].synchronization
-		local modules = sync.modules
+		local modules = sync.modules;
+		local alternative_modules = subject_client.client.alternative_modules[sync.id]
+		
+		if alternative_modules ~= nil then
+			modules = sync.modules
+		end
 		
 		for j=1, #protocol.module_mappings do
 			local stream_module = modules[protocol.module_mappings[j]]
@@ -137,9 +154,20 @@ function synchronization_system:remove_entity(removed_entity)
 	
 	local out_bs = protocol.write_msg("DELETE_OBJECT", { ["removed_id"] = removed_id } )
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
+	
 	for notified_client, state in pairs(remote_states) do
 		print ("sending notification to " .. notified_client.synchronization.id)
 		notified_client.client.net_channel:post_reliable_bs(out_bs)
+	end
+	
+	-- just in case, remove all occurences of alternative modulesets in connected clients
+	-- this is necessary in case an object without alternative moduleset was created
+	-- and still the old alternative module set could be accessed
+	
+	local targets = self.owner_entity_system.all_systems["client"].targets
+	
+	for i=1, #targets do
+		targets[i].alternative_modules[removed_id] = nil
 	end
 	
 	self.transmission_id_generator:release_id(removed_id)
