@@ -17,6 +17,12 @@ function client_system:remove_entity(removed_entity)
 	processing_system.remove_entity(self, removed_entity)
 end
 
+function client_system:substep()
+	for i=1, #self.targets do
+		self.targets[i].client.substep_unreliable:Reset()
+	end
+end
+
 function client_system:update_tick()
 	local synchronization = self.owner_entity_system.all_systems["synchronization"]
 	
@@ -26,19 +32,16 @@ function client_system:update_tick()
 		if client.update_timer:get_milliseconds() > client.update_interval_ms then
 			client.update_timer:reset()
 			
+			-- streams may post a reliable event: "sleep" event for example
+			client.net_channel.unreliable_buf:Reset()
+			
 			-- right away handles sending initial state for newly-connected clients
 			-- updates states of changing (or new) objects in proximity
 			-- may post some reliable messages to the client component
 			synchronization:update_state_for_client(self.targets[i])
 			
-			-- streams may post a reliable event: "sleep" event for example
-			client.net_channel.unreliable_buf:Reset()
-			
-			client.net_channel:post_unreliable("CLIENT_PREDICTION", {
-				at_step = self.targets[i].character.at_step,
-				position = self.targets[i].cpp_entity.physics.body:GetPosition(),
-				velocity = self.targets[i].cpp_entity.physics.body:GetLinearVelocity()
-			})
+			-- write all unreliable data that substeps requested
+			client.net_channel:post_unreliable_bs(client.substep_unreliable)
 			
 			synchronization:update_streams_for_client(self.targets[i], client.net_channel.unreliable_buf)
 			

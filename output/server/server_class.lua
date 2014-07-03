@@ -59,6 +59,7 @@ function server_class:set_current_map(map_filename, loader_filename)
 	}
 	
 	table.insert(self.current_map.world_object.substep_callbacks, function()
+		self.systems.client:substep()
 		self.systems.character:substep()
 	end)
 end

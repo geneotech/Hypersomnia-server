@@ -12,7 +12,7 @@ config_table = {
 	sensitivity = vec2(2.5, 2.5),
 	
 	
-	tickrate = 90,
+	tickrate = 60,
 	
 	simulate_lag = 1,
 	packet_loss = 0.01,
