@@ -27,7 +27,7 @@ function character_system:substep()
 			movement.moving_forward = command.moving_forward
 			movement.moving_backward = command.moving_backward
 			
-			character.at_step = command.step_number
+			character.at_step = command.at_step
 		else
 			-- zero out the outputs
 			
@@ -42,44 +42,15 @@ function character_system:substep()
 end
 
 function character_system:update()
-	local msgs = self.owner_entity_system.messages["client_commands"]
+	local msgs = self.owner_entity_system.messages["INPUT_SNAPSHOT"]
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
 		
-		local input_bs = msg:get_bitstream()
-		
 		local character = msg.subject.character
+		
 		if character ~= nil then
-			while input_bs:GetNumberOfUnreadBits() >= 8 do
-				input_bs:name_property("message_type")
-				local message_type = input_bs:ReadByte()
-				
-				if message_type == protocol.messages.INPUT_SNAPSHOT then
-					local new_command = {}
-					
-					new_command.step_number = input_bs:ReadUint()
-					
-					if input_bs:ReadBit() then
-						new_command.moving_left = 1
-						else new_command.moving_left = 0
-					end
-					if input_bs:ReadBit() then
-						new_command.moving_right = 1
-						else new_command.moving_right = 0
-					end
-					if input_bs:ReadBit() then
-						new_command.moving_forward = 1
-						else new_command.moving_forward = 0
-					end
-					if input_bs:ReadBit() then
-						new_command.moving_backward = 1
-						else new_command.moving_backward = 0
-					end
-					
-					table.insert(character.buffered_commands, new_command)
-				end
-			end
+			table.insert(character.buffered_commands, msg.data)
 		end
 	end
 end

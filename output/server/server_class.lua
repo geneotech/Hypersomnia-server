@@ -2,17 +2,14 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\protocol.lua")
 
 dofile "server\\world_archetypes\\world_archetypes.lua"
 
-dofile "server\\messages\\network_message.lua"
-dofile "server\\messages\\client_commands.lua"
-
 dofile "server\\components\\client.lua"
 dofile "server\\components\\synchronization.lua"
 dofile "server\\components\\character.lua"
 
-
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
 
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile "server\\systems\\character_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\synchronization_system.lua"
@@ -28,14 +25,16 @@ function server_class:constructor()
 	
 	self.entity_system_instance:register_messages {
 		"network_message",
-		"client_commands"
 	}
+	
+	self.entity_system_instance:register_messages (protocol.message_names)
 	
 	-- create all necessary systems
 	self.systems = {}
 	self.systems.synchronization = synchronization_system:create()
 	self.systems.client = client_system:create(self.server)
 	self.systems.character = character_system:create()
+	self.systems.protocol = protocol_system:create(function (msg) end)
 	
 	self.entity_system_instance:register_systems(self.systems)
 end
@@ -112,14 +111,16 @@ function server_class:loop()
 		elseif message_type == network_event.ID_CONNECTION_LOST then
 			self:remove_client(guid)
 		elseif message_type == protocol.GAME_TRANSMISSION then
-			self.entity_system_instance:post(network_message:create { 
-				subject = self.user_map:at(guid),
-				data = packet
+			local entity = self.user_map:at(guid) 
+			self.entity_system_instance:post_table("network_message", { 
+				subject = entity,
+				data = packet,
+				channel = entity.client.net_channel
 			})
 		end
 	end
 
-	self.systems.client:handle_incoming_commands()
+	self.systems.protocol:handle_incoming_commands()
 	
 	-- some systems may post reliable commands because of the incoming network messages
 	self.systems.character:update()

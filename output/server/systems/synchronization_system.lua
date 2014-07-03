@@ -57,16 +57,14 @@ function synchronization_system:update_state_for_client(subject_client)
 		end
 		
 		if num_out_of_date > 0 then	
-			local output_bs = BitStream()
+			local output_bs = protocol.write_msg("STATE_UPDATE", {
+				object_count = num_out_of_date
+			})
 			
-			output_bs:name_property("STATE_UPDATE")
-			output_bs:WriteByte(protocol.messages.STATE_UPDATE)
-			output_bs:name_property("object_count")
-			output_bs:WriteUshort(num_out_of_date)
 			output_bs:name_property("all objects")
 			output_bs:WriteBitstream(out_of_date)
 			
-			subject_client.client.net_channel:post_bitstream(output_bs)
+			subject_client.client.net_channel:post_reliable_bs(output_bs)
 		end
 	end
 end
@@ -104,12 +102,13 @@ function synchronization_system:update_streams_for_client(subject_client, output
 	
 	-- if anything needs streaming at all
 	if num_streamed_objects > 0 then
-		output_bitstream:name_property("STREAM_UPDATE")
-		output_bitstream:WriteByte(protocol.messages.STREAM_UPDATE)	
-		output_bitstream:name_property("streamed_count")
-		output_bitstream:WriteUshort(num_streamed_objects)
-		output_bitstream:name_property("streamed objects")
-		output_bitstream:WriteBitstream(streamed_bs)
+		local output_bs = protocol.write_msg("STREAM_UPDATE", {
+			object_count = num_streamed_objects
+		})
+		
+		output_bs:name_property("streamed objects")
+		output_bs:WriteBitstream(streamed_bs)
+		output_bitstream:WriteBitstream(output_bs)
 	end
 end
 
@@ -124,14 +123,7 @@ function synchronization_system:add_entity(new_entity)
 	
 	if new_entity.client ~= nil then
 		-- post a reliable message with an id of the synchronization object the client will control
-		
-		local output_bs = BitStream()
-		output_bs:name_property("ASSIGN_SYNC_ID")
-		output_bs:WriteByte(protocol.messages.ASSIGN_SYNC_ID)
-		output_bs:name_property("client_id")
-		output_bs:WriteUshort(new_entity.synchronization.id)
-		
-		new_entity.client.net_channel:post_bitstream(output_bs)
+		new_entity.client.net_channel:post_reliable("ASSIGN_SYNC_ID", { sync_id = new_entity.synchronization.id })
 	end
 	
 	processing_system.add_entity(self, new_entity)
@@ -140,19 +132,14 @@ end
 function synchronization_system:remove_entity(removed_entity)
 	local removed_id = removed_entity.synchronization.id
 	
-	local output_bs = BitStream()
-	output_bs:name_property("DELETE_OBJECT")
-	output_bs:WriteByte(protocol.messages.DELETE_OBJECT)
-	output_bs:name_property("removed_id")
-	output_bs:WriteUshort(removed_id)
-	
 	print ("removing " .. removed_id) 
 	local remote_states = removed_entity.synchronization.remote_states
 	
+	local out_bs = protocol.write_msg("DELETE_OBJECT", { ["removed_id"] = removed_id } )
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
 	for notified_client, state in pairs(remote_states) do
 		print ("sending notification to " .. notified_client.synchronization.id)
-		notified_client.client.net_channel:post_bitstream(output_bs)
+		notified_client.client.net_channel:post_reliable_bs(out_bs)
 	end
 	
 	self.transmission_id_generator:release_id(removed_id)
