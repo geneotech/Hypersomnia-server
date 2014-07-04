@@ -18,29 +18,43 @@ function character_system:substep()
 		
 		if #commands > 0 then
 			local command = commands[1]
-			table.remove(commands, 1)
+			
+			if command.at_step <= character.at_step+1 then
+				table.remove(commands, 1)
 		
-			local movement = self.targets[i].cpp_entity.movement
 			
-			movement.moving_left = command.moving_left
-			movement.moving_right = command.moving_right
-			movement.moving_forward = command.moving_forward
-			movement.moving_backward = command.moving_backward
+				local movement = self.targets[i].cpp_entity.movement
+				
+				movement.moving_left = command.moving_left
+				movement.moving_right = command.moving_right
+				movement.moving_forward = command.moving_forward
+				movement.moving_backward = command.moving_backward
+				
+				--if character.at_step > command.at_step then
+				--	character.at_step = character.at_step + 1
+				--else
+					character.at_step = command.at_step
+				--end
+				
+			else
+				character.at_step = character.at_step + 1
+			end
+		
 			
-			character.at_step = command.at_step
 		else
 			-- zero out the outputs
 			
-			local movement = self.targets[i].cpp_entity.movement
-			
-			movement.moving_left = 0
-			movement.moving_right = 0
-			movement.moving_forward = 0
-			movement.moving_backward = 0
+			--local movement = self.targets[i].cpp_entity.movement
+			--
+			--movement.moving_left = 0
+			--movement.moving_right = 0
+			--movement.moving_forward = 0
+			--movement.moving_backward = 0
+			character.at_step = character.at_step + 1
 		end
 		
 		self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
-				at_step = self.targets[i].character.at_step
+				at_step = character.at_step
 			}))
 	end
 end
