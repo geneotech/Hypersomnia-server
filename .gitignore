@@ -181,3 +181,10 @@ error_message.txt
 *.mp3
 *.ogg
 /RelDeb
+/DebRel
+/Debugg
+/Debugging
+/Optimized
+/output/server_logfile.txt
+/UpgradeLog.htm
+/UpgradeLog2.htm
