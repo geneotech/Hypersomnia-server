@@ -14,6 +14,7 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile "server\\systems\\character_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\synchronization_system.lua"
+dofile "server\\systems\\orientation_system.lua"
 
 server_class = inherits_from()
 
@@ -36,6 +37,7 @@ function server_class:constructor()
 	self.systems.client = client_system:create(self.server)
 	self.systems.character = character_system:create()
 	self.systems.protocol = protocol_system:create(function (msg) end)
+	self.systems.orientation = orientation_system:create()
 	
 	self.entity_system_instance:register_systems(self.systems)
 end
@@ -134,7 +136,8 @@ function server_class:loop()
 	
 	-- some systems may post reliable commands because of the incoming network messages
 	self.systems.character:update()
-
+	
+	self.systems.orientation:update()
 	
 	-- after all reliable messages were possibly posted, do the update tick
 	self.systems.client:update_tick()
