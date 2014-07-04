@@ -8,6 +8,7 @@ dofile "server\\components\\character.lua"
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\crosshair_sync.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile "server\\systems\\character_system.lua"
@@ -69,6 +70,7 @@ function server_class:new_client(new_guid)
 
 	local client_modules = {}
 	client_modules["movement"] = sync_modules.movement:create()
+	client_modules["crosshair"] = sync_modules.crosshair:create()
 	
 	local new_client = components.create_components {
 		client = {
@@ -87,10 +89,10 @@ function server_class:new_client(new_guid)
 	
 	self.entity_system_instance:add_entity(new_client)	
 	
-	--local client_specific_modules = {}
-	--client_specific_modules["movement"] = sync_modules.movement:create()
-	--
-	--new_client.client.alternative_modules[new_client.synchronization.id] = client_specific_modules
+	local client_specific_modules = {}
+	client_specific_modules["movement"] = sync_modules.movement:create()
+	
+	new_client.client.alternative_modules[new_client.synchronization.id] = client_specific_modules
 	
 	self.user_map:add(new_guid, new_client)
 	

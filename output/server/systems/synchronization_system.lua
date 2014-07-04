@@ -96,24 +96,24 @@ function synchronization_system:update_streams_for_client(subject_client, output
 		local alternative_modules = subject_client.client.alternative_modules[sync.id]
 		
 		if alternative_modules ~= nil then
-			modules = sync.modules
+			modules = alternative_modules
 		end
+		
+		object_bs:Reset()
 		
 		for j=1, #protocol.module_mappings do
 			local stream_module = modules[protocol.module_mappings[j]]
-			if stream_module ~= nil then
-				object_bs:Reset()
-				
-				stream_module:write_stream(proximity_targets[i], object_bs) 
-				
-				if object_bs:size() > 0 then
-					streamed_bs:name_property("object_id")
-					streamed_bs:WriteUshort(sync.id)
-					streamed_bs:name_property("object_data")
-					streamed_bs:WriteBitstream(object_bs)
-					num_streamed_objects = num_streamed_objects + 1
-				end
+			if stream_module ~= nil then		
+				stream_module:write_stream(proximity_targets[i], object_bs)
 			end
+		end
+		
+		if object_bs:size() > 0 then
+			streamed_bs:name_property("object_id")
+			streamed_bs:WriteUshort(sync.id)
+			streamed_bs:name_property("object_data")
+			streamed_bs:WriteBitstream(object_bs)
+			num_streamed_objects = num_streamed_objects + 1
 		end
 	end
 	
@@ -167,7 +167,7 @@ function synchronization_system:remove_entity(removed_entity)
 	local targets = self.owner_entity_system.all_systems["client"].targets
 	
 	for i=1, #targets do
-		targets[i].alternative_modules[removed_id] = nil
+		targets[i].client.alternative_modules[removed_id] = nil
 	end
 	
 	self.transmission_id_generator:release_id(removed_id)
