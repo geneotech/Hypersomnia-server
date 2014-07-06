@@ -158,6 +158,7 @@ function synchronization_system:remove_entity(removed_entity)
 	for notified_client, state in pairs(remote_states) do
 		print ("sending notification to " .. notified_client.synchronization.id)
 		notified_client.client.net_channel:post_reliable_bs(out_bs)
+		remote_states[notified_client] = nil
 	end
 	
 	-- just in case, remove all occurences of alternative modulesets in connected clients
