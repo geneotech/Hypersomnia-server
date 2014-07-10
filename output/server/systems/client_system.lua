@@ -33,7 +33,7 @@ function client_system:update_tick()
 			client.update_timer:reset()
 			
 			-- streams may post a reliable event: "sleep" event for example
-			client.net_channel.unreliable_buf:Reset()
+			--client.net_channel.unreliable_buf:Reset()
 			
 			-- right away handles sending initial state for newly-connected clients
 			-- updates states of changing (or new) objects in proximity

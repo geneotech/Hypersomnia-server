@@ -33,7 +33,7 @@ function character_system:substep()
 		else
 			character.at_step = character.at_step + 1
 		end
-		print(character.at_step)
+		
 		self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
 				at_step = character.at_step
 			}))
