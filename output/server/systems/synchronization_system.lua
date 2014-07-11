@@ -155,11 +155,15 @@ function synchronization_system:remove_entity(removed_entity)
 	local out_bs = protocol.write_msg("DELETE_OBJECT", { ["removed_id"] = removed_id } )
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
 	
+	local new_remote_states = clone_table(remote_states)
+	
 	for notified_client, state in pairs(remote_states) do
 		print ("sending notification to " .. notified_client.synchronization.id)
 		notified_client.client.net_channel:post_reliable_bs(out_bs)
-		remote_states[notified_client] = nil
+		new_remote_states[notified_client] = nil
 	end
+	
+	removed_entity.synchronization.remote_states = new_remote_states
 	
 	-- just in case, remove all occurences of alternative modulesets in connected clients
 	-- this is necessary in case an object without alternative moduleset was created
