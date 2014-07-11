@@ -19,6 +19,7 @@ world_archetypes.create_player = function(owner_scene, position)
 				
 				angular_damping = 5,
 				--linear_damping = 18,
+				--max_speed = 3300,
 				
 				fixed_rotation = true,
 				density = 0.1

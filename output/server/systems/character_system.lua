@@ -15,6 +15,9 @@ function character_system:substep()
 	for i=1, #self.targets do
 		local character = self.targets[i].character 
 		local commands = character.buffered_commands
+		local movement = self.targets[i].cpp_entity.movement
+		
+		--local predicted = " "
 		
 		if #commands > 0 then
 			local command = commands[1]
@@ -22,7 +25,6 @@ function character_system:substep()
 			table.remove(commands, 1)
 		
 			
-			local movement = self.targets[i].cpp_entity.movement
 			
 			movement.moving_left = command.moving_left
 			movement.moving_right = command.moving_right
@@ -31,8 +33,15 @@ function character_system:substep()
 			
 			character.at_step = command.at_step
 		else
+			--predicted = " (predicted)"
 			character.at_step = character.at_step + 1
 		end
+		
+		--global_logfile:write("\nStep: " .. character.at_step .. predicted)
+		--global_logfile:write("\nleft: " .. movement.moving_left)
+		--global_logfile:write("\nright: " .. movement.moving_right)
+		--global_logfile:write("\nforward: " .. movement.moving_forward)
+		--global_logfile:write("\nbackward: " .. movement.moving_backward)
 		
 		self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
 				at_step = character.at_step
