@@ -44,7 +44,11 @@ function character_system:substep()
 		--global_logfile:write("\nbackward: " .. movement.moving_backward)
 		
 		self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
-				at_step = character.at_step
+				at_step = character.at_step,
+				moving_left = movement.moving_left,
+				moving_right = movement.moving_right,
+				moving_forward = movement.moving_forward,
+				moving_backward = movement.moving_backward
 			}))
 	end
 end
