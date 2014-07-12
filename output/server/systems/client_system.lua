@@ -50,6 +50,7 @@ function client_system:update_tick()
 			
 			if output_bs:size() > 0 then
 				--if client.net_channel.sender.reliable_buf:size() > 0 then
+				--print "Sending data..."
 				local outstr = ("\nSending time: " .. self.global_timer:get_milliseconds() .. " (size: " .. output_bs:size() .. " bits) \n\n" .. auto_string_indent(output_bs.content) .. "\n\n")
 				transmission_log:write(outstr)
 				--print(outstr)

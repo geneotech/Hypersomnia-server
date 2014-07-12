@@ -70,7 +70,8 @@ function synchronization_system:update_state_for_client(subject_client)
 		
 		if num_out_of_date > 0 then	
 			local output_bs = protocol.write_msg("STATE_UPDATE", {
-				object_count = num_out_of_date
+				object_count = num_out_of_date,
+				bits = out_of_date:size()
 			})
 			
 			output_bs:name_property("all objects")
@@ -120,7 +121,8 @@ function synchronization_system:update_streams_for_client(subject_client, output
 	-- if anything needs streaming at all
 	if num_streamed_objects > 0 then
 		local output_bs = protocol.write_msg("STREAM_UPDATE", {
-			object_count = num_streamed_objects
+			object_count = num_streamed_objects,
+			bits = streamed_bs:size()
 		})
 		
 		output_bs:name_property("streamed objects")
