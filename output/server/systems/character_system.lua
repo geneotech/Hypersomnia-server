@@ -32,9 +32,13 @@ function character_system:substep()
 			movement.moving_backward = command.moving_backward
 			
 			character.at_step = command.at_step
+			
+			self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
+				at_step = character.at_step
+			}))
 		else
 			--predicted = " (predicted)"
-			character.at_step = character.at_step + 1
+			--character.at_step = character.at_step + 1
 		end
 		
 		--global_logfile:write("\nStep: " .. character.at_step .. predicted)
@@ -43,13 +47,7 @@ function character_system:substep()
 		--global_logfile:write("\nforward: " .. movement.moving_forward)
 		--global_logfile:write("\nbackward: " .. movement.moving_backward)
 		
-		self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
-				at_step = character.at_step,
-				moving_left = movement.moving_left,
-				moving_right = movement.moving_right,
-				moving_forward = movement.moving_forward,
-				moving_backward = movement.moving_backward
-			}))
+
 	end
 end
 

@@ -4,6 +4,7 @@ client_system = inherits_from (processing_system)
 
 function client_system:constructor(network)
 	self.network = network
+	self.global_timer = timer()
 	
 	processing_system.constructor(self)
 end
@@ -48,11 +49,11 @@ function client_system:update_tick()
 			local output_bs = client.net_channel:send()
 			
 			if output_bs:size() > 0 then
-				if client.net_channel.sender.reliable_buf:size() > 0 then
-				--local outstr = ("Sending " .. output_bs:size() .. " bits: \n\n" .. auto_string_indent(output_bs.content) .. "\n\n")
-				--transmission_log:write(outstr)
+				--if client.net_channel.sender.reliable_buf:size() > 0 then
+				local outstr = ("\nSending time: " .. self.global_timer:get_milliseconds() .. " (size: " .. output_bs:size() .. " bits) \n\n" .. auto_string_indent(output_bs.content) .. "\n\n")
+				transmission_log:write(outstr)
 				--print(outstr)
-				end
+				--end
 				self.network:send(output_bs, send_priority.IMMEDIATE_PRIORITY, send_reliability.UNRELIABLE, 0, client.guid, false)
 			end
 		end
