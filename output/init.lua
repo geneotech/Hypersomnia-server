@@ -1,5 +1,6 @@
 
 global_logfile = io.open("server_logfile.txt", "w")
+transmission_log = io.open("server_transmission.txt", "w")
 
 dofile "config.lua"
 
@@ -28,4 +29,6 @@ SHOULD_QUIT_FLAG = false
 while not SHOULD_QUIT_FLAG do
 	server:loop()
 end
+
+transmission_log:close()
 global_logfile:close()

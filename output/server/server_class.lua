@@ -20,6 +20,9 @@ server_class = inherits_from()
 
 function server_class:constructor()
 	self.server = network_interface()
+	
+	self.server:occasional_ping(false)
+	
 	self.received = network_packet()
 	self.user_map = guid_to_object_map()
 
@@ -131,6 +134,9 @@ function server_class:loop()
 			})
 		end
 	end
+	
+	-- tick the game world
+	self.current_map:loop()
 
 	self.systems.protocol:handle_incoming_commands()
 	
@@ -144,6 +150,4 @@ function server_class:loop()
 	
 	self.entity_system_instance:flush_messages()
 	
-	-- tick the game world
-	self.current_map:loop()
 end
