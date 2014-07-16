@@ -6,15 +6,21 @@ dofile "server\\components\\client.lua"
 dofile "server\\components\\synchronization.lua"
 dofile "server\\components\\character.lua"
 
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\weapons.lua")
+
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\crosshair_sync.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
+
 dofile "server\\systems\\character_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\synchronization_system.lua"
 dofile "server\\systems\\orientation_system.lua"
+dofile "server\\systems\\bullet_broadcast_system.lua"
 
 server_class = inherits_from()
 
@@ -30,6 +36,7 @@ function server_class:constructor()
 	
 	self.entity_system_instance:register_messages {
 		"network_message",
+		"shot_message"
 	}
 	
 	self.entity_system_instance:register_messages (protocol.message_names)
@@ -41,6 +48,8 @@ function server_class:constructor()
 	self.systems.character = character_system:create()
 	self.systems.protocol = protocol_system:create(function (msg) end)
 	self.systems.orientation = orientation_system:create()
+	self.systems.weapon = weapon_system:create(nil, nil)
+	self.systems.bullet_broadcast = bullet_broadcast_system:create()
 	
 	self.entity_system_instance:register_systems(self.systems)
 end
@@ -63,6 +72,10 @@ function server_class:set_current_map(map_filename, loader_filename)
 		color = rgba(0, 255, 0, 255),
 		size = vec2(37, 37)
 	}
+	
+	self.systems.weapon.physics = self.current_map.world_object.physics_system
+	
+	create_weapons(self.current_map, false)
 	
 	table.insert(self.current_map.world_object.substep_callbacks, function()
 		self.systems.client:substep()
@@ -88,7 +101,9 @@ function server_class:new_client(new_guid)
 		
 		character = {},
 		
-		cpp_entity = world_character
+		cpp_entity = world_character,
+		
+		weapon = self.current_map.weapons.m4a1
 	}
 	
 	
@@ -144,6 +159,10 @@ function server_class:loop()
 	self.systems.character:update()
 	
 	self.systems.orientation:update()
+	
+	self.systems.bullet_broadcast:translate_shot_requests()
+	self.systems.weapon:update()
+	self.systems.bullet_broadcast:broadcast_bullets()
 	
 	-- after all reliable messages were possibly posted, do the update tick
 	self.systems.client:update_tick()

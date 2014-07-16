@@ -7,7 +7,7 @@ function components.client:constructor(init)
 	
 	self.alternative_modules = {}
 	
-	set_rate(self, "update", 4)
+	set_rate(self, "update", 60)
 	
 	self.net_channel = reliable_channel_wrapper:create()
 end

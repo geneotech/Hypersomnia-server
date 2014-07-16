@@ -1,7 +1,5 @@
 orientation_system = inherits_from (processing_system)
 
-function orientation_system:constructor() end
-
 function orientation_system:update()
 	local msgs = self.owner_entity_system.messages["CROSSHAIR_SNAPSHOT"]
 	
