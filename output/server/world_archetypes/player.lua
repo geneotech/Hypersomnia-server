@@ -13,7 +13,7 @@ world_archetypes.create_player = function(owner_scene, position)
 			body_type = Box2D.b2_dynamicBody,
 			
 			body_info = {
-				filter = filter_characters,
+				filter = filters.REMOTE_CHARACTER,
 				shape_type = physics_info.RECT,
 				rect_size = vec2(37, 37),
 				
