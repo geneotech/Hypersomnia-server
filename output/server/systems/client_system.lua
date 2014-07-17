@@ -55,6 +55,7 @@ function client_system:update_tick()
 				transmission_log:write(outstr)
 				--print(outstr)
 				--end
+				
 				self.network:send(output_bs, send_priority.IMMEDIATE_PRIORITY, send_reliability.UNRELIABLE, 0, client.guid, false)
 			end
 		end

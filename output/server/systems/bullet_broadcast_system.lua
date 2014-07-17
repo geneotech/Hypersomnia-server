@@ -20,12 +20,14 @@ function bullet_broadcast_system:broadcast_bullets()
 		-- here, we should perform a proximity check for the processed bullet(s)
 		local subject = msgs[i].subject
 		
-		local all_clients = self.owner_entity_system.all_systems["client"].targets
+		local client_sys = self.owner_entity_system.all_systems["client"]
+		local all_clients = client_sys.targets
 		
 		for j=1, #all_clients do
 			local remote_id = all_clients[j].synchronization.id
 			if subject.synchronization.id ~= remote_id then
 				all_clients[j].client.net_channel:post_reliable("SHOT_INFO", {
+					subject_ping = client_sys.network:get_last_ping(subject.client.guid),
 					subject_id = subject.synchronization.id,
 					position = msgs[i].gun_transform.pos,
 					rotation = msgs[i].gun_transform.rotation
