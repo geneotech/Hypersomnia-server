@@ -26,8 +26,11 @@ function bullet_broadcast_system:broadcast_bullets()
 		for j=1, #all_clients do
 			local remote_id = all_clients[j].synchronization.id
 			if subject.synchronization.id ~= remote_id then
+				print(subject.client:update_time_remaining())
+				local remaining = all_clients[j].client:update_time_remaining()
+				if remaining < 0 then remaining = 0 end
 				all_clients[j].client.net_channel:post_reliable("SHOT_INFO", {
-					subject_ping = client_sys.network:get_last_ping(subject.client.guid),
+					delay_time = client_sys.network:get_last_ping(subject.client.guid)/2 + remaining,
 					subject_id = subject.synchronization.id,
 					position = msgs[i].gun_transform.pos,
 					rotation = msgs[i].gun_transform.rotation

@@ -30,7 +30,7 @@ function client_system:update_tick()
 	for i=1, #self.targets do
 		local client = self.targets[i].client
 		
-		if client.update_timer:get_milliseconds() > client.update_interval_ms then
+		if client:update_ready() then
 			client.update_timer:reset()
 			
 			-- streams may post a reliable event: "sleep" event for example
