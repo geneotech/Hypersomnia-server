@@ -79,7 +79,7 @@ function server_class:set_current_map(map_filename, loader_filename)
 	
 	create_weapons(self.current_map, false)
 	
-	table.insert(self.current_map.world_object.substep_callbacks, function()
+	table.insert(self.current_map.world_object.prestep_callbacks, function()
 		self.systems.client:substep()
 		self.systems.character:substep()
 	end)
@@ -155,8 +155,13 @@ function server_class:loop()
 	end
 	
 	-- tick the game world
-	self.current_map:loop()
-	self.current_map.world_object:flush_messages()
+	local cpp_world = self.current_map.world_object
+	
+	cpp_world:handle_input()
+	cpp_world:handle_physics()
+	
+	cpp_world:process_all_systems()
+	--cpp_world:render()
 
 	self.systems.protocol:handle_incoming_commands()
 	
@@ -174,4 +179,6 @@ function server_class:loop()
 	
 	self.entity_system_instance:flush_messages()
 	
+	self.entity_system_instance:handle_removed_entities()
+	cpp_world:consume_events()
 end
