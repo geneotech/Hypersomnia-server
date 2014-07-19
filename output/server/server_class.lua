@@ -52,6 +52,8 @@ function server_class:constructor()
 	self.systems.bullet_broadcast = bullet_broadcast_system:create()
 	
 	self.entity_system_instance:register_systems(self.systems)
+	
+	self.global_timer = timer()
 end
 
 function server_class:start(port, max_players, max_connections)
@@ -128,6 +130,8 @@ function server_class:remove_client(guid)
 end
 
 function server_class:loop()
+	--print(self.global_timer:extract_milliseconds())
+
 	local packet = self.received
 	
 	if self.server:receive(packet) then
@@ -152,6 +156,7 @@ function server_class:loop()
 	
 	-- tick the game world
 	self.current_map:loop()
+	self.current_map.world_object:flush_messages()
 
 	self.systems.protocol:handle_incoming_commands()
 	
