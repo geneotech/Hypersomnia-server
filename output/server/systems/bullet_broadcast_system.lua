@@ -15,10 +15,14 @@ end
 function bullet_broadcast_system:handle_hit_requests()
 	local msgs = self.owner_entity_system.messages["HIT_REQUEST"]
 	
+	local objects = self.owner_entity_system.all_systems["synchronization"].object_by_id
+	
 	for i=1, #msgs do
 		print "received hit request"
 		print (msgs[i].data.bullet_id)
 		print (msgs[i].data.victim_id)
+		print (msgs[i].subject.weapon.existing_bullets[msgs[i].data.bullet_id] ~= nil)
+		print (objects[msgs[i].data.victim_id] ~= nil)
 	end
 end
 

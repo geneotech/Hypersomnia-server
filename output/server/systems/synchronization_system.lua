@@ -2,6 +2,7 @@ synchronization_system = inherits_from (processing_system)
 
 function synchronization_system:constructor() 
 	self.transmission_id_generator = id_generator_ushort()
+	self.object_by_id = {}
 	
 	processing_system.constructor(self)
 end
@@ -138,11 +139,13 @@ function synchronization_system:delete_client_states(removed_client)
 end
 
 function synchronization_system:add_entity(new_entity)
-	new_entity.synchronization.id = self.transmission_id_generator:generate_id()
+	local new_id = self.transmission_id_generator:generate_id()
+	new_entity.synchronization.id = new_id
+	self.object_by_id[new_id] = new_entity
 	
 	if new_entity.client ~= nil then
 		-- post a reliable message with an id of the synchronization object the client will control
-		new_entity.client.net_channel:post_reliable("ASSIGN_SYNC_ID", { sync_id = new_entity.synchronization.id })
+		new_entity.client.net_channel:post_reliable("ASSIGN_SYNC_ID", { sync_id = new_id })
 	end
 	
 	processing_system.add_entity(self, new_entity)
@@ -150,6 +153,7 @@ end
 
 function synchronization_system:remove_entity(removed_entity)
 	local removed_id = removed_entity.synchronization.id
+	self.object_by_id[removed_id] = nil
 	
 	print ("removing " .. removed_id) 
 	local remote_states = removed_entity.synchronization.remote_states
