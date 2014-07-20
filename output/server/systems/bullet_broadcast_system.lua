@@ -12,6 +12,15 @@ function bullet_broadcast_system:translate_shot_requests()
 	end
 end
 
+function bullet_broadcast_system:handle_hit_requests()
+	local msgs = self.owner_entity_system.messages["HIT_REQUEST"]
+	
+	for i=1, #msgs do
+		print "received hit request"
+		print (msgs[i].data.bullet_id)
+		print (msgs[i].data.victim_id)
+	end
+end
 
 function bullet_broadcast_system:broadcast_bullets()
 	local msgs = self.owner_entity_system.messages["shot_message"]

@@ -173,6 +173,8 @@ function server_class:loop()
 	self.systems.bullet_broadcast:translate_shot_requests()
 	self.systems.weapon:update()
 	self.systems.bullet_broadcast:broadcast_bullets()
+	self.systems.bullet_broadcast:handle_hit_requests()
+	
 	
 	-- after all reliable messages were possibly posted, do the update tick
 	self.systems.client:update_tick()
