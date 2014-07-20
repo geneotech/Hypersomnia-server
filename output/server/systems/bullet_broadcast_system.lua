@@ -23,6 +23,38 @@ function bullet_broadcast_system:handle_hit_requests()
 		print (msgs[i].data.victim_id)
 		print (msgs[i].subject.weapon.existing_bullets[msgs[i].data.bullet_id] ~= nil)
 		print (objects[msgs[i].data.victim_id] ~= nil)
+		
+		local msg = msgs[i]
+		local subject = msg.subject
+		local bullet_id = msg.data.bullet_id
+		local existing_bullets = subject.weapon.existing_bullets
+		local victim = objects[msg.data.victim_id]
+		
+		if victim ~= nil and existing_bullets[bullet_id] ~= nil then
+			print ("broadcasting")
+			-- broadcast the fact of hitting
+		
+			-- here, we should perform a proximity check for the parties interested in the hit
+			
+			local all_clients = self.owner_entity_system.all_systems["client"].targets
+		
+			print (#all_clients)
+			for j=1, #all_clients do
+				-- don't tell about it to the sender himself
+				print(subject.synchronization.id, all_clients[j].synchronization.id)
+				if subject.synchronization.id ~= all_clients[j].synchronization.id then
+					-- sending
+					print "sending"
+					all_clients[j].client.net_channel:post_reliable("HIT_INFO", {
+						sender_id = subject.synchronization.id,
+						victim_id = victim.synchronization.id,
+						["bullet_id"] = bullet_id
+					})
+				end
+			end
+		
+			existing_bullets[bullet_id] = nil
+		end
 	end
 end
 
