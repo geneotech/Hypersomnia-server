@@ -102,7 +102,8 @@ function bullet_broadcast_system:broadcast_bullets()
 					delay_time = client_sys.network:get_last_ping(subject.client.guid)/2 + remaining,
 					subject_id = subject.synchronization.id,
 					position = msgs[i].gun_transform.pos,
-					rotation = msgs[i].gun_transform.rotation
+					rotation = msgs[i].gun_transform.rotation,
+					starting_bullet_id = msgs[i].bullets[1].id
 				})
 			end
 			
