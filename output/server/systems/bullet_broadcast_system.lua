@@ -76,9 +76,18 @@ function bullet_broadcast_system:broadcast_bullets()
 	for i=1, #msgs do
 		-- here, we should perform a proximity check for the processed bullet(s)
 		local subject = msgs[i].subject
+		local weapon = subject.weapon
 		
 		-- invalidate old bullets as we go
-		self:invalidate_old_bullets(subject.weapon)
+		self:invalidate_old_bullets(weapon)
+		
+		-- save all new bullets for later invalidation
+		-- and hit request handling
+		for j=1, #msgs[i].bullets do
+			weapon.existing_bullets[msgs[i].bullets[j].id] = {
+				lifetime = timer()	
+			}
+		end
 		
 		local client_sys = self.owner_entity_system.all_systems["client"]
 		local all_clients = client_sys.targets
