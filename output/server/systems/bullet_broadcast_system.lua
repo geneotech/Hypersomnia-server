@@ -12,6 +12,15 @@ function bullet_broadcast_system:translate_shot_requests()
 	end
 end
 
+function bullet_broadcast_system:invalidate_old_bullets(weapon)
+	for k, v in pairs(weapon.existing_bullets) do
+		if v.lifetime:get_milliseconds() > weapon.max_lifetime_ms then
+			weapon.existing_bullets[k] = nil
+			print "invalidating"
+		end
+	end
+end
+
 function bullet_broadcast_system:handle_hit_requests()
 	local msgs = self.owner_entity_system.messages["HIT_REQUEST"]
 	
@@ -26,6 +35,9 @@ function bullet_broadcast_system:handle_hit_requests()
 		
 		local msg = msgs[i]
 		local subject = msg.subject
+		
+		self:invalidate_old_bullets(subject.weapon)
+		
 		local bullet_id = msg.data.bullet_id
 		local existing_bullets = subject.weapon.existing_bullets
 		local victim = objects[msg.data.victim_id]
@@ -66,13 +78,7 @@ function bullet_broadcast_system:broadcast_bullets()
 		local subject = msgs[i].subject
 		
 		-- invalidate old bullets as we go
-		local weapon = subject.weapon
-		for k, v in pairs(weapon.existing_bullets) do
-			if v.lifetime:get_milliseconds() > weapon.max_lifetime_ms then
-				weapon.existing_bullets[k] = nil
-				print "invalidating"
-			end
-		end
+		self:invalidate_old_bullets(subject.weapon)
 		
 		local client_sys = self.owner_entity_system.all_systems["client"]
 		local all_clients = client_sys.targets
