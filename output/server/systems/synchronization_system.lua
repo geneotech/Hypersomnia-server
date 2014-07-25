@@ -55,18 +55,18 @@ function synchronization_system:update_state_for_client(subject_client)
 			-- if the object was not yet sent through reliable channel or is out of date
 			if up_to_date == nil or up_to_date == false then
 				-- switch to an alternative module set if the client component provides one
-				local alternative_modules = subject_client.client.alternative_modules[id]
+				local sync_modules = subject_client.client.alternative_modules[id]
 				
-				if alternative_modules ~= nil then
-					self:write_object_state(id, alternative_modules, out_of_date)
-				else
-					self:write_object_state(id, sync.modules, out_of_date)
+				if sync_modules == nil then
+					sync_modules = sync.modules 
 				end
+				
+				self:write_object_state(id, sync_modules, out_of_date)
 			
 				num_out_of_date = num_out_of_date + 1
-			
 			end			
-				states[subject_client] = true
+			
+			states[subject_client] = true
 		end
 		
 		if num_out_of_date > 0 then	
