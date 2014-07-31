@@ -1,3 +1,4 @@
+-- this should be named "client_controller_system"
 character_system = inherits_from (processing_system)
 
 function character_system:constructor()
@@ -8,6 +9,13 @@ end
 
 function character_system:get_required_components()
 	return { "character" }
+end
+
+
+function character_system:remove_entity(removed_entity)
+	if removed_entity.character.owner_client ~= nil then
+		removed_entity.character.owner_client.client.controlled_object = nil
+	end
 end
 
 function character_system:substep()
@@ -33,7 +41,7 @@ function character_system:substep()
 			
 			character.at_step = command.at_step
 			
-			self.targets[i].client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
+			self.targets[i].character.owner_client.client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
 				at_step = character.at_step
 			}))
 		else
@@ -57,7 +65,7 @@ function character_system:update()
 	for i=1, #msgs do
 		local msg = msgs[i]
 		
-		local character = msg.subject.character
+		local character = msg.subject.client.controlled_object.character
 		
 		if character ~= nil then
 			table.insert(character.buffered_commands, msg.data)

@@ -5,8 +5,9 @@ function orientation_system:update()
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
+		local character = msg.subject.client.controlled_object
 		
-		msg.subject.synchronization.modules.crosshair.position = msgs[i].data.position
+		character.orientation.crosshair_position = msgs[i].data.position
 	end
 end
 

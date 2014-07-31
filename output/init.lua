@@ -20,7 +20,7 @@ dofile "server\\view\\camera.lua"
 
 dofile "server\\server_class.lua"
 
---setup_debugger()
+setup_debugger()
 
 server = server_class:create()
 server:start(37017, 30, 60)

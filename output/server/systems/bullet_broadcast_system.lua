@@ -1,21 +1,26 @@
 bullet_broadcast_system = inherits_from (processing_system)
 
+function bullet_broadcast_system:constructor()
+	self.next_bullet_global_id = 1
+end
 
 function bullet_broadcast_system:translate_shot_requests()
 	local msgs = self.owner_entity_system.messages["SHOT_REQUEST"]
 	
 	for i=1, #msgs do
-		table.insert(msgs[i].subject.weapon.buffered_actions, { trigger = components.weapon.triggers.SHOOT, premade_shot = {
+		local character = msgs[i].subject.client.controlled_object
+	
+		table.insert(character.weapon.buffered_actions, { trigger = components.weapon.triggers.SHOOT, premade_shot = {
 			position = msgs[i].data.position,
 			rotation = msgs[i].data.rotation
 		}})
 	end
 end
 
-function bullet_broadcast_system:invalidate_old_bullets(weapon)
-	for k, v in pairs(weapon.existing_bullets) do
-		if v.lifetime:get_milliseconds() > weapon.max_lifetime_ms then
-			weapon.existing_bullets[k] = nil
+function bullet_broadcast_system:invalidate_old_bullets(subject)
+	for k, v in pairs(subject.local_bullet_id_to_global) do
+		if v.lifetime:get_milliseconds() > v.max_lifetime_ms then
+			subject.local_bullet_id_to_global[k] = nil
 			print "invalidating"
 		end
 	end
@@ -28,21 +33,24 @@ function bullet_broadcast_system:handle_hit_requests()
 	
 	for i=1, #msgs do
 		print "received hit request"
-		print (msgs[i].data.bullet_id)
-		print (msgs[i].data.victim_id)
-		print (msgs[i].subject.weapon.existing_bullets[msgs[i].data.bullet_id] ~= nil)
-		print (objects[msgs[i].data.victim_id] ~= nil)
+		--print (msgs[i].data.bullet_id)
+		--print (msgs[i].data.victim_id)
+		--print (msgs[i].subject.weapon.existing_bullets[msgs[i].data.bullet_id] ~= nil)
+		--print (objects[msgs[i].data.victim_id] ~= nil)
+		
 		
 		local msg = msgs[i]
 		local subject = msg.subject
+		local client = subject.client
+		local character = client.controlled_object
 		
-		self:invalidate_old_bullets(subject.weapon)
+		self:invalidate_old_bullets(client)
 		
-		local bullet_id = msg.data.bullet_id
-		local existing_bullets = subject.weapon.existing_bullets
+		local local_bullet_id = msg.data.bullet_id
+		local existing_bullets = client.local_bullet_id_to_global
 		local victim = objects[msg.data.victim_id]
 		
-		if victim ~= nil and existing_bullets[bullet_id] ~= nil then
+		if victim ~= nil and existing_bullets[local_bullet_id] ~= nil then
 			print ("broadcasting")
 			-- broadcast the fact of hitting
 		
@@ -52,58 +60,66 @@ function bullet_broadcast_system:handle_hit_requests()
 		
 			print (#all_clients)
 			for j=1, #all_clients do
-				-- don't tell about it to the sender himself
-				print(subject.synchronization.id, all_clients[j].synchronization.id)
-				if subject.synchronization.id ~= all_clients[j].synchronization.id then
+				-- don't tell about it to the sender themself
+				if subject ~= all_clients[j] then
 					-- sending
 					print "sending"
 					all_clients[j].client.net_channel:post_reliable("HIT_INFO", {
-						sender_id = subject.synchronization.id,
 						victim_id = victim.synchronization.id,
-						["bullet_id"] = bullet_id
+						bullet_id = existing_bullets[local_bullet_id].global_id
 					})
 				end
 			end
 		
-			existing_bullets[bullet_id] = nil
+			existing_bullets[local_bullet_id] = nil
 		end
 	end
 end
 
-function bullet_broadcast_system:broadcast_bullets()
+function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 	local msgs = self.owner_entity_system.messages["shot_message"]
+	if update_time_remaining < 0 then update_time_remaining = 0 end
 	
 	for i=1, #msgs do
 		-- here, we should perform a proximity check for the processed bullet(s)
 		local subject = msgs[i].subject
-		local weapon = subject.weapon
+		local client_entity = subject.character.owner_client
+		local client = client_entity.client
+		local character = client.controlled_object
 		
 		-- invalidate old bullets as we go
-		self:invalidate_old_bullets(weapon)
+		self:invalidate_old_bullets(client)
 		
 		-- save all new bullets for later invalidation
 		-- and hit request handling
+		
+		local first_global_id = self.next_bullet_global_id
+		local first_local_id = client.next_bullet_local_id
+		
 		for j=1, #msgs[i].bullets do
-			weapon.existing_bullets[msgs[i].bullets[j].id] = {
-				lifetime = timer()	
+			client.local_bullet_id_to_global[client.next_bullet_local_id] = {
+				global_id = self.next_bullet_global_id,
+				lifetime = timer(),
+				max_lifetime_ms = subject.weapon.max_lifetime_ms
 			}
+			
+			-- keep in sync with the client
+			client.next_bullet_local_id = client.next_bullet_local_id + 1
+			self.next_bullet_global_id = self.next_bullet_global_id + 1
 		end
 		
 		local client_sys = self.owner_entity_system.all_systems["client"]
 		local all_clients = client_sys.targets
 		
 		for j=1, #all_clients do
-			local remote_id = all_clients[j].synchronization.id
-			if subject.synchronization.id ~= remote_id then
-				print(subject.client:update_time_remaining())
-				local remaining = all_clients[j].client:update_time_remaining()
-				if remaining < 0 then remaining = 0 end
+			if client_entity ~= all_clients[j] then
 				all_clients[j].client.net_channel:post_reliable("SHOT_INFO", {
-					delay_time = client_sys.network:get_last_ping(subject.client.guid)/2 + remaining,
-					subject_id = subject.synchronization.id,
+					delay_time = client_sys.network:get_last_ping(client.guid)/2 + update_time_remaining,
+					subject_id = character.synchronization.id,
 					position = msgs[i].gun_transform.pos,
 					rotation = msgs[i].gun_transform.rotation,
-					starting_bullet_id = msgs[i].bullets[1].id
+					starting_bullet_id = first_global_id,
+					random_seed = character.synchronization.id*10 + first_local_id
 				})
 			end
 			
