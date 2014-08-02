@@ -1,24 +1,24 @@
-synchronization_system = inherits_from (processing_system)
+replication_system = inherits_from (processing_system)
 
-function synchronization_system:constructor() 
+function replication_system:constructor() 
 	self.transmission_id_generator = id_generator_ushort()
 	self.object_by_id = {}
 	
 	processing_system.constructor(self)
 end
 
-function synchronization_system:get_required_components()
-	return { "synchronization" }
+function replication_system:get_required_components()
+	return { "replication" }
 end
 
-function synchronization_system:get_targets_of_interest(subject_client)
+function replication_system:get_targets_of_interest(subject_client)
 	-- here should follow proximity checks
 	return self.targets
 end
 
-function synchronization_system:update_replicas()
+function replication_system:update_replicas()
 	for i=1, #self.targets do
-		for k, group in pairs(self.targets[i].synchronization.module_sets) do
+		for k, group in pairs(self.targets[i].replication.module_sets) do
 			for key, module_object in pairs(group.replica) do
 				-- setup dirty flags
 				module_object:replicate(self.targets[i])
@@ -27,7 +27,7 @@ function synchronization_system:update_replicas()
 	end
 end
 
-function synchronization_system:write_new_object(id, archetype_id, replica, output_bs)
+function replication_system:write_new_object(id, archetype_id, replica, output_bs)
 	protocol.write_sig(protocol.new_object_signature, {
 		["id"] = id,
 		["archetype_id"] = archetype_id
@@ -39,7 +39,7 @@ function synchronization_system:write_new_object(id, archetype_id, replica, outp
 	end
 end
 					
-function synchronization_system:write_object_state(id, replica, dirty_flags, client_channel, output_bs)
+function replication_system:write_object_state(id, replica, dirty_flags, client_channel, output_bs)
 	local content_bs = BitStream()
 	
 	content_bs:name_property("object_id")
@@ -68,7 +68,7 @@ function synchronization_system:write_object_state(id, replica, dirty_flags, cli
 	return modules_updated
 end
 
-function synchronization_system:update_state_for_client(subject_client)
+function replication_system:update_state_for_client(subject_client)
 	local client_channel = subject_client.client.net_channel
 	local targets_of_interest = self:get_targets_of_interest(subject_client)
 	
@@ -83,7 +83,7 @@ function synchronization_system:update_state_for_client(subject_client)
 		local num_targets = #targets_of_interest
 		
 		for i=1, num_targets do
-			local depends_on = targets_of_interest[i].synchronization.depends_on
+			local depends_on = targets_of_interest[i].replication.depends_on
 			
 			if depends_on ~= nil then
 				for j=1, #depends_on do
@@ -96,7 +96,7 @@ function synchronization_system:update_state_for_client(subject_client)
 		
 		for i=1, #targets_of_interest do
 			local target = targets_of_interest[i]
-			local sync = target.synchronization
+			local sync = target.replication
 			local id = sync.id
 			
 			-- avoid handling duplicates
@@ -161,31 +161,31 @@ function synchronization_system:update_state_for_client(subject_client)
 	end
 end
 
-function synchronization_system:delete_client_states(removed_client)
+function replication_system:delete_client_states(removed_client)
 	for i=1, #self.targets do
-		self.targets[i].synchronization.remote_states[removed_client] = nil
+		self.targets[i].replication.remote_states[removed_client] = nil
 	end
 end
 
-function synchronization_system:add_entity(new_entity)
+function replication_system:add_entity(new_entity)
 	local new_id = self.transmission_id_generator:generate_id()
-	new_entity.synchronization.id = new_id
+	new_entity.replication.id = new_id
 	self.object_by_id[new_id] = new_entity
 	
 	if new_entity.client ~= nil then
-		-- post a reliable message with an id of the synchronization object that will represent client info
+		-- post a reliable message with an id of the replication object that will represent client info
 		new_entity.client.net_channel:post_reliable("ASSIGN_SYNC_ID", { sync_id = new_id })
 	end
 	
 	processing_system.add_entity(self, new_entity)
 end
 
-function synchronization_system:remove_entity(removed_entity)
-	local removed_id = removed_entity.synchronization.id
+function replication_system:remove_entity(removed_entity)
+	local removed_id = removed_entity.replication.id
 	self.object_by_id[removed_id] = nil
 	
 	print ("removing " .. removed_id) 
-	local remote_states = removed_entity.synchronization.remote_states
+	local remote_states = removed_entity.replication.remote_states
 	
 	local out_bs = protocol.write_msg("DELETE_OBJECT", { ["removed_id"] = removed_id } )
 	-- sends delete notification to all clients to whom this object state was reliably sent at least once
@@ -193,12 +193,12 @@ function synchronization_system:remove_entity(removed_entity)
 	local new_remote_states = clone_table(remote_states)
 	
 	for notified_client, state in pairs(remote_states) do
-		print ("sending notification to " .. notified_client.client.controlled_object.synchronization.id)
+		print ("sending notification to " .. notified_client.client.controlled_object.replication.id)
 		notified_client.client.net_channel:post_reliable_bs(out_bs)
 		new_remote_states[notified_client] = nil
 	end
 	
-	removed_entity.synchronization.remote_states = new_remote_states
+	removed_entity.replication.remote_states = new_remote_states
 	
 	-- just in case, remove all occurences of group_by_id in connected clients
 	-- this is necessary in case an object without alternative moduleset mapping was created

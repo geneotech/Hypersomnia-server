@@ -29,7 +29,7 @@ end
 function bullet_broadcast_system:handle_hit_requests()
 	local msgs = self.owner_entity_system.messages["HIT_REQUEST"]
 	
-	local objects = self.owner_entity_system.all_systems["synchronization"].object_by_id
+	local objects = self.owner_entity_system.all_systems["replication"].object_by_id
 	
 	for i=1, #msgs do
 		print "received hit request"
@@ -65,7 +65,7 @@ function bullet_broadcast_system:handle_hit_requests()
 					-- sending
 					print "sending"
 					all_clients[j].client.net_channel:post_reliable("HIT_INFO", {
-						victim_id = victim.synchronization.id,
+						victim_id = victim.replication.id,
 						bullet_id = existing_bullets[local_bullet_id].global_id
 					})
 				end
@@ -115,11 +115,11 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 			if client_entity ~= all_clients[j] then
 				all_clients[j].client.net_channel:post_reliable("SHOT_INFO", {
 					delay_time = client_sys.network:get_last_ping(client.guid)/2 + update_time_remaining,
-					subject_id = character.synchronization.id,
+					subject_id = character.replication.id,
 					position = msgs[i].gun_transform.pos,
 					rotation = msgs[i].gun_transform.rotation,
 					starting_bullet_id = first_global_id,
-					random_seed = character.synchronization.id*10 + first_local_id
+					random_seed = character.replication.id*10 + first_local_id
 				})
 			end
 			

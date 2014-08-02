@@ -4,7 +4,7 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\archetypes\\archetype_library.lua")
 dofile "server\\world_archetypes\\world_archetypes.lua"
 
 dofile "server\\components\\client.lua"
-dofile "server\\components\\synchronization.lua"
+dofile "server\\components\\replication.lua"
 dofile "server\\components\\client_controller.lua"
 dofile "server\\components\\orientation.lua"
 
@@ -23,7 +23,7 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
 
 dofile "server\\systems\\client_controller_system.lua"
 dofile "server\\systems\\client_system.lua"
-dofile "server\\systems\\synchronization_system.lua"
+dofile "server\\systems\\replication_system.lua"
 dofile "server\\systems\\orientation_system.lua"
 dofile "server\\systems\\bullet_broadcast_system.lua"
 
@@ -48,7 +48,7 @@ function server_class:constructor()
 	
 	-- create all necessary systems
 	self.systems = {}
-	self.systems.synchronization = synchronization_system:create()
+	self.systems.replication = replication_system:create()
 	self.systems.client = client_system:create(self.server)
 	self.systems.client_controller = client_controller_system:create()
 	self.systems.protocol = protocol_system:create(function (msg) end, function (in_bs) end )
@@ -113,7 +113,7 @@ function server_class:new_client(new_guid)
 		
 		--client_info = {},
 		--
-		--synchronization = {
+		--replication = {
 		--	module_sets = {
 		--		PUBLIC = {
 		--			replica = client_modules,
@@ -130,7 +130,7 @@ function server_class:new_client(new_guid)
 		
 		cpp_entity = world_character,
 		
-		synchronization = {
+		replication = {
 			module_sets = {
 				PUBLIC = {
 					replica = public_character_modules,
@@ -154,7 +154,7 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.controlled_object = new_controlled_character
 	
-	new_client.client.group_by_id[new_controlled_character.synchronization.id] = "OWNER"
+	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
 	self.user_map:add(new_guid, new_client)
 	

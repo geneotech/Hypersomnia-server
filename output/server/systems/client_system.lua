@@ -16,7 +16,7 @@ end
 function client_system:remove_entity(removed_entity)
 	processing_system.remove_entity(self, removed_entity)
 	
-	self.owner_entity_system.all_systems["synchronization"]:delete_client_states(removed_entity)
+	self.owner_entity_system.all_systems["replication"]:delete_client_states(removed_entity)
 	
 	if removed_entity.client.controlled_object ~= nil then
 		self.owner_entity_system:remove_entity(removed_entity.client.controlled_object)
@@ -31,15 +31,15 @@ end
 
 
 function client_system:update_replicas_and_states()
-	local synchronization = self.owner_entity_system.all_systems["synchronization"]
+	local replication = self.owner_entity_system.all_systems["replication"]
 	
-	synchronization:update_replicas()
+	replication:update_replicas()
 	
 	for i=1, #self.targets do
 		-- right away handles sending initial state for newly-connected clients
 		-- updates states of changing (or new) objects in proximity
 		-- may post some reliable messages to the client component
-		synchronization:update_state_for_client(self.targets[i])
+		replication:update_state_for_client(self.targets[i])
 	end
 end
 
