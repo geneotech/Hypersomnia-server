@@ -83,7 +83,7 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 	for i=1, #msgs do
 		-- here, we should perform a proximity check for the processed bullet(s)
 		local subject = msgs[i].subject
-		local client_entity = subject.character.owner_client
+		local client_entity = subject.client_controller.owner_client
 		local client = client_entity.client
 		local character = client.controlled_object
 		

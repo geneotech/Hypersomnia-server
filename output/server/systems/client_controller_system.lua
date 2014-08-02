@@ -1,28 +1,28 @@
 -- this should be named "client_controller_system"
-character_system = inherits_from (processing_system)
+client_controller_system = inherits_from (processing_system)
 
-function character_system:constructor()
+function client_controller_system:constructor()
 	self.steps = 0
 	
 	processing_system.constructor(self)
 end
 
-function character_system:get_required_components()
-	return { "character" }
+function client_controller_system:get_required_components()
+	return { "client_controller" }
 end
 
 
-function character_system:remove_entity(removed_entity)
-	if removed_entity.character.owner_client ~= nil then
-		removed_entity.character.owner_client.client.controlled_object = nil
+function client_controller_system:remove_entity(removed_entity)
+	if removed_entity.client_controller.owner_client ~= nil then
+		removed_entity.client_controller.owner_client.client.controlled_object = nil
 	end
 end
 
-function character_system:substep()
+function client_controller_system:substep()
 	self.steps = self.steps + 1
 	for i=1, #self.targets do
-		local character = self.targets[i].character 
-		local commands = character.buffered_commands
+		local client_controller = self.targets[i].client_controller 
+		local commands = client_controller.buffered_commands
 		local movement = self.targets[i].cpp_entity.movement
 		
 		--local predicted = " "
@@ -39,10 +39,10 @@ function character_system:substep()
 			movement.moving_forward = command.moving_forward
 			movement.moving_backward = command.moving_backward
 			
-			character.at_step = command.at_step
+			client_controller.at_step = command.at_step
 			
-			self.targets[i].character.owner_client.client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
-				at_step = character.at_step
+			self.targets[i].client_controller.owner_client.client.substep_unreliable:WriteBitstream(protocol.write_msg("CURRENT_STEP", {
+				at_step = client_controller.at_step
 			}))
 		else
 			--predicted = " (predicted)"
@@ -59,16 +59,16 @@ function character_system:substep()
 	end
 end
 
-function character_system:update()
+function client_controller_system:update()
 	local msgs = self.owner_entity_system.messages["INPUT_SNAPSHOT"]
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
 		
-		local character = msg.subject.client.controlled_object.character
+		local client_controller = msg.subject.client.controlled_object.client_controller
 		
-		if character ~= nil then
-			table.insert(character.buffered_commands, msg.data)
+		if client_controller ~= nil then
+			table.insert(client_controller.buffered_commands, msg.data)
 		end
 	end
 end

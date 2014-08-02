@@ -1,22 +1,27 @@
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\protocol.lua")
 
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\archetypes\\archetype_library.lua")
 dofile "server\\world_archetypes\\world_archetypes.lua"
 
 dofile "server\\components\\client.lua"
 dofile "server\\components\\synchronization.lua"
-dofile "server\\components\\character.lua"
+dofile "server\\components\\client_controller.lua"
+dofile "server\\components\\orientation.lua"
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\weapons.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\crosshair_sync.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\client_info_sync.lua")
+
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
+--dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\client_info.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
 
-dofile "server\\systems\\character_system.lua"
+dofile "server\\systems\\client_controller_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\synchronization_system.lua"
 dofile "server\\systems\\orientation_system.lua"
@@ -45,7 +50,7 @@ function server_class:constructor()
 	self.systems = {}
 	self.systems.synchronization = synchronization_system:create()
 	self.systems.client = client_system:create(self.server)
-	self.systems.character = character_system:create()
+	self.systems.client_controller = client_controller_system:create()
 	self.systems.protocol = protocol_system:create(function (msg) end, function (in_bs) end )
 	self.systems.orientation = orientation_system:create()
 	self.systems.weapon = weapon_system:create(nil, nil)
@@ -54,6 +59,8 @@ function server_class:constructor()
 	self.entity_system_instance:register_systems(self.systems)
 	
 	self.global_timer = timer()
+	
+	set_rate(self, "update", 60)
 end
 
 function server_class:start(port, max_players, max_connections)
@@ -81,40 +88,73 @@ function server_class:set_current_map(map_filename, loader_filename)
 	
 	table.insert(self.current_map.world_object.prestep_callbacks, function()
 		self.systems.client:substep()
-		self.systems.character:substep()
+		self.systems.client_controller:substep()
 	end)
 end
 
 function server_class:new_client(new_guid)
 	local world_character = world_archetypes.create_player(self.current_map, vec2(0, 0))
 
-	local client_modules = {}
-	client_modules["movement"] = sync_modules.movement:create()
-	client_modules["crosshair"] = sync_modules.crosshair:create()
+	local public_character_modules = {}
+	public_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
+	public_character_modules["crosshair"] = replication_module:create(protocol.replication_tables.crosshair)
+
+	local owner_character_modules = {}
+	owner_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
+	
+	--local client_modules = {}
+	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
+
 	
 	local new_client = components.create_components {
 		client = {
 			guid = new_guid
-		},
+		}
 		
-		synchronization = {
-			modules = client_modules
-		},
+		--client_info = {},
+		--
+		--synchronization = {
+		--	module_sets = {
+		--		PUBLIC = {
+		--			replica = client_modules,
+		--			archetype_name = "CLIENT_INFO"
+		--		}
+		--	}
+		--}
+	}
 		
-		character = {},
+	local new_controlled_character = components.create_components {
+		client_controller = {
+			owner_client = new_client
+		},
 		
 		cpp_entity = world_character,
 		
-		weapon = self.current_map.weapons.m4a1
+		synchronization = {
+			module_sets = {
+				PUBLIC = {
+					replica = public_character_modules,
+					archetype_name = "REMOTE_PLAYER"
+				},
+					
+				OWNER = {
+					replica = owner_character_modules,
+					archetype_name = "CONTROLLED_PLAYER"
+				}
+			}
+		},
+		
+		orientation = {},
+		
+		weapon = self.current_map.weapons.shotgun
 	}
 	
+	self.entity_system_instance:add_entity(new_client)
+	self.entity_system_instance:add_entity(new_controlled_character)
 	
-	self.entity_system_instance:add_entity(new_client)	
+	new_client.client.controlled_object = new_controlled_character
 	
-	local client_specific_modules = {}
-	client_specific_modules["movement"] = sync_modules.movement:create()
-	
-	new_client.client.alternative_modules[new_client.synchronization.id] = client_specific_modules
+	new_client.client.group_by_id[new_controlled_character.synchronization.id] = "OWNER"
 	
 	self.user_map:add(new_guid, new_client)
 	
@@ -122,11 +162,10 @@ function server_class:new_client(new_guid)
 end
 
 function server_class:remove_client(guid)	
-	--print(table.inspect(self.user_map:at(guid)))
 	self.entity_system_instance:remove_entity(self.user_map:at(guid))
 	self.user_map:remove(guid)
 	
-	--print "A client has disconnected or lost the connection."
+	print "A client has disconnected or lost the connection."
 end
 
 function server_class:loop()
@@ -161,26 +200,30 @@ function server_class:loop()
 	cpp_world:handle_physics()
 	
 	cpp_world:process_all_systems()
-	--cpp_world:render()
+	cpp_world:render()
 
 	self.systems.protocol:handle_incoming_commands()
 	
 	-- some systems may post reliable commands because of the incoming network messages
-	self.systems.character:update()
+	self.systems.client_controller:update()
 	
 	self.systems.orientation:update()
 	
 	self.systems.bullet_broadcast:translate_shot_requests()
 	self.systems.weapon:update()
-	self.systems.bullet_broadcast:broadcast_bullets()
+	self.systems.bullet_broadcast:broadcast_bullets(self:update_time_remaining())
 	self.systems.bullet_broadcast:handle_hit_requests()
-	
-	
-	-- after all reliable messages were possibly posted, do the update tick
-	self.systems.client:update_tick()
 	
 	self.entity_system_instance:flush_messages()
 	
-	self.entity_system_instance:handle_removed_entities()
+	if #self.systems.client.targets > 0 and self:update_ready() then
+		self.systems.client:update_replicas_and_states()
+		
+		self.entity_system_instance:handle_removed_entities()
+		
+		-- after all reliable messages (incl. DELETE_OBJECTS) were possibly posted, call network channels
+		self.systems.client:send_all_pending_data()		
+	end
+	
 	cpp_world:consume_events()
 end
