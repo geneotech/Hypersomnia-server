@@ -193,7 +193,7 @@ function replication_system:remove_entity(removed_entity)
 	local new_remote_states = clone_table(remote_states)
 	
 	for notified_client, state in pairs(remote_states) do
-		print ("sending notification to " .. notified_client.client.controlled_object.replication.id)
+		--print ("sending notification to " .. notified_client.client.controlled_object.replication.id)
 		notified_client.client.net_channel:post_reliable_bs(out_bs)
 		new_remote_states[notified_client] = nil
 	end

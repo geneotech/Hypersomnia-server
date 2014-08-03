@@ -14,13 +14,12 @@ function client_system:get_required_components()
 end
 
 function client_system:remove_entity(removed_entity)
+	self.owner_entity_system.all_systems["replication"]:delete_client_states(removed_entity)
 	processing_system.remove_entity(self, removed_entity)
 	
-	self.owner_entity_system.all_systems["replication"]:delete_client_states(removed_entity)
-	
-	if removed_entity.client.controlled_object ~= nil then
-		self.owner_entity_system:remove_entity(removed_entity.client.controlled_object)
-	end
+	--if removed_entity.client.controlled_object ~= nil then
+	--	self.owner_entity_system:remove_entity(removed_entity.client.controlled_object)
+	--end
 end
 
 function client_system:substep()

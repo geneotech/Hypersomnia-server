@@ -16,6 +16,8 @@ function client_controller_system:remove_entity(removed_entity)
 	if removed_entity.client_controller.owner_client ~= nil then
 		removed_entity.client_controller.owner_client.client.controlled_object = nil
 	end
+	
+	processing_system.remove_entity(self, removed_entity)
 end
 
 function client_controller_system:substep()

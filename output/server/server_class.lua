@@ -176,7 +176,14 @@ function server_class:new_client(new_guid)
 end
 
 function server_class:remove_client(guid)	
-	self.entity_system_instance:remove_entity(self.user_map:at(guid))
+	local client = self.user_map:at(guid)
+	
+	if client.client.controlled_object ~= nil then
+		self.entity_system_instance:remove_entity(client.client.controlled_object)
+	end
+	
+	self.entity_system_instance:remove_entity(client)
+	
 	self.user_map:remove(guid)
 	
 	print "A client has disconnected or lost the connection."
