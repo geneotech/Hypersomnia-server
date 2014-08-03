@@ -49,14 +49,22 @@ function bullet_broadcast_system:handle_hit_requests()
 		local local_bullet_id = msg.data.bullet_id
 		local existing_bullets = client.local_bullet_id_to_global
 		local victim = objects[msg.data.victim_id]
+		local bullet = existing_bullets[local_bullet_id]
 		
-		if victim ~= nil and existing_bullets[local_bullet_id] ~= nil then
+		if victim ~= nil and bullet ~= nil then
 			print ("broadcasting")
 			-- broadcast the fact of hitting
 		
 			-- here, we should perform a proximity check for the parties interested in the hit
 			
 			local all_clients = self.owner_entity_system.all_systems["client"].targets
+			
+			
+			victim.health.hp = victim.health.hp - bullet.damage_amount
+			
+			if victim.health.hp < 0 then
+				victim.health.hp = 0
+			end
 		
 			print (#all_clients)
 			for j=1, #all_clients do
@@ -66,7 +74,7 @@ function bullet_broadcast_system:handle_hit_requests()
 					print "sending"
 					all_clients[j].client.net_channel:post_reliable("HIT_INFO", {
 						victim_id = victim.replication.id,
-						bullet_id = existing_bullets[local_bullet_id].global_id
+						bullet_id = bullet.global_id
 					})
 				end
 			end
@@ -100,7 +108,8 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 			client.local_bullet_id_to_global[client.next_bullet_local_id] = {
 				global_id = self.next_bullet_global_id,
 				lifetime = timer(),
-				max_lifetime_ms = subject.weapon.max_lifetime_ms
+				max_lifetime_ms = subject.weapon.max_lifetime_ms,
+				damage_amount = subject.weapon.bullet_damage
 			}
 			
 			-- keep in sync with the client

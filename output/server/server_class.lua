@@ -14,8 +14,10 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\crosshair_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\client_info_sync.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\health_sync.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\health.lua")
 --dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\client_info.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
@@ -98,9 +100,11 @@ function server_class:new_client(new_guid)
 	local public_character_modules = {}
 	public_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
 	public_character_modules["crosshair"] = replication_module:create(protocol.replication_tables.crosshair)
+	public_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
 
 	local owner_character_modules = {}
 	owner_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
+	owner_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
 	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
@@ -142,6 +146,10 @@ function server_class:new_client(new_guid)
 					archetype_name = "CONTROLLED_PLAYER"
 				}
 			}
+		},
+		
+		health = {
+			hp = 100
 		},
 		
 		orientation = {},
