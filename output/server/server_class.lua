@@ -95,7 +95,7 @@ function server_class:set_current_map(map_filename, loader_filename)
 end
 
 function server_class:new_client(new_guid)
-	local world_character = world_archetypes.create_player(self.current_map, vec2(0, 0))
+	local world_character = world_archetypes.create_player(self.current_map, self.current_map.teleport_shuffler:next_value().pos)
 
 	local public_character_modules = {}
 	public_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
@@ -163,6 +163,12 @@ function server_class:new_client(new_guid)
 	new_client.client.controlled_object = new_controlled_character
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
+	
+	new_controlled_character.health.on_death = function(this)
+		--self.entity_system_instance:post_remove(this)
+		this.health.hp = 100
+		this.cpp_entity.physics.body:SetTransform(to_meters(self.current_map.teleport_shuffler:next_value().pos), 0)
+	end
 	
 	self.user_map:add(new_guid, new_client)
 	

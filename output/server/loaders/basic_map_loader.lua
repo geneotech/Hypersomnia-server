@@ -51,7 +51,7 @@ return function(map_filename, scene_object)
 		}
 	}
 	
-	scene_object.teleport_position = objects_by_type["teleport_position"][1] 
+	scene_object.teleport_shuffler = array_shuffler:create(objects_by_type["teleport_position"])
 	
 	-- bind the atlas once
 	GL.glActiveTexture(GL.GL_TEXTURE0)

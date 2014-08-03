@@ -59,13 +59,16 @@ function bullet_broadcast_system:handle_hit_requests()
 			
 			local all_clients = self.owner_entity_system.all_systems["client"].targets
 			
-			
-			victim.health.hp = victim.health.hp - bullet.damage_amount
-			
-			if victim.health.hp < 0 then
-				victim.health.hp = 0
+			if victim.health ~= nil then
+				victim.health.hp = victim.health.hp - bullet.damage_amount
+				
+				if victim.health.hp < 0 then
+					victim.health.hp = 0
+					
+					victim.health.on_death(victim)
+				end
 			end
-		
+			
 			print (#all_clients)
 			for j=1, #all_clients do
 				-- don't tell about it to the sender themself
