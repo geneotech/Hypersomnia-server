@@ -120,7 +120,7 @@ function replication_system:update_state_for_client(subject_client)
 					
 					for k, v in pairs(replica) do
 						-- hold dirty flags field-wise
-						states[subject_client][k] = {}
+						states[subject_client][k] = v:get_all_marked(client_channel:next_unreliable_sequence())
 					end
 				end
 				
