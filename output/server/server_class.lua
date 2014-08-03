@@ -39,7 +39,7 @@ function server_class:constructor()
 	self.received = network_packet()
 	self.user_map = guid_to_object_map()
 
-	self.entity_system_instance = entity_system:create()
+	self.entity_system_instance = entity_system:create(function () self.current_map.world_object:call_deletes() end)
 	
 	self.entity_system_instance:register_messages {
 		"network_message",
