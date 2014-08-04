@@ -35,6 +35,7 @@ function server_class:constructor()
 	self.server = network_interface()
 	
 	self.server:occasional_ping(true)
+	self.server:set_timeout_all(7000)
 	
 	self.received = network_packet()
 	self.user_map = guid_to_object_map()
