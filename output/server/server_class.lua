@@ -155,7 +155,7 @@ function server_class:new_client(new_guid)
 		
 		orientation = {},
 		
-		weapon = self.current_map.weapons.shotgun
+		weapon = self.current_map.weapons.m4a1
 	}
 	
 	self.entity_system_instance:add_entity(new_client)
@@ -223,7 +223,16 @@ function server_class:loop()
 	
 	cpp_world:process_all_systems()
 	cpp_world:render()
-
+	
+	if #self.systems.client.targets > 0 and self:update_ready() then
+		self.systems.client:update_replicas_and_states()
+		
+		self.entity_system_instance:handle_removed_entities()
+		
+		-- after all reliable messages (incl. DELETE_OBJECTS) were possibly posted, call network channels
+		self.systems.client:send_all_pending_data()		
+	end
+	
 	self.systems.protocol:handle_incoming_commands()
 	
 	-- some systems may post reliable commands because of the incoming network messages
@@ -237,15 +246,6 @@ function server_class:loop()
 	self.systems.bullet_broadcast:handle_hit_requests()
 	
 	self.entity_system_instance:flush_messages()
-	
-	if #self.systems.client.targets > 0 and self:update_ready() then
-		self.systems.client:update_replicas_and_states()
-		
-		self.entity_system_instance:handle_removed_entities()
-		
-		-- after all reliable messages (incl. DELETE_OBJECTS) were possibly posted, call network channels
-		self.systems.client:send_all_pending_data()		
-	end
 	
 	cpp_world:consume_events()
 end

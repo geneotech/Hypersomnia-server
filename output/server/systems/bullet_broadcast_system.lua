@@ -62,7 +62,7 @@ function bullet_broadcast_system:handle_hit_requests()
 			if victim.health ~= nil then
 				victim.health.hp = victim.health.hp - bullet.damage_amount
 				
-				if victim.health.hp < 0 then
+				if victim.health.hp <= 0 then
 					victim.health.hp = 0
 					
 					victim.health.on_death(victim)

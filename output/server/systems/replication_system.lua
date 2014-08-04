@@ -35,7 +35,14 @@ function replication_system:write_new_object(id, archetype_id, replica, output_b
 	
 	for i=1, #protocol.module_mappings do
 		output_bs:name_property("has module " .. i)
-		output_bs:WriteBit(replica[protocol.module_mappings[i]] ~= nil)
+		
+		local module_object = replica[protocol.module_mappings[i]]
+		
+		output_bs:WriteBit(module_object ~= nil)
+		
+		--if module_object ~= nil then
+		--	module_object:write_initial_data(output_bs)
+		--end
 	end
 end
 					
