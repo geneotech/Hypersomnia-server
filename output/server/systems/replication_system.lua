@@ -33,6 +33,8 @@ function replication_system:write_new_object(id, archetype_id, replica, output_b
 		["archetype_id"] = archetype_id
 	}, output_bs)
 	
+	local initial_state_bs = BitStream()
+	
 	for i=1, #protocol.module_mappings do
 		output_bs:name_property("has module " .. i)
 		
@@ -40,10 +42,13 @@ function replication_system:write_new_object(id, archetype_id, replica, output_b
 		
 		output_bs:WriteBit(module_object ~= nil)
 		
-		--if module_object ~= nil then
-		--	module_object:write_initial_data(output_bs)
-		--end
+		if module_object ~= nil then
+			module_object:write_initial_state(self.object_by_id[id], initial_state_bs)
+		end
 	end
+	
+	output_bs:name_property("initial_state_bs")
+	output_bs:WriteBitstream(initial_state_bs)
 end
 					
 function replication_system:write_object_state(id, replica, dirty_flags, client_channel, output_bs)
