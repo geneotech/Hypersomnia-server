@@ -52,13 +52,14 @@ function bullet_broadcast_system:handle_hit_requests()
 		local bullet = existing_bullets[local_bullet_id]
 		
 		if victim ~= nil and bullet ~= nil then
-			print ("broadcasting")
-			-- broadcast the fact of hitting
-		
-			-- here, we should perform a proximity check for the parties interested in the hit
+			local messages_bs = BitStream()
+			local damage_bs = BitStream()
 			
-			local all_clients = self.owner_entity_system.all_systems["client"].targets
-			
+			messages_bs:WriteBitstream(protocol.write_msg("HIT_INFO", {
+				victim_id = victim.replication.id,
+				bullet_id = bullet.global_id
+			}))
+					
 			if victim.health ~= nil then
 				victim.health.hp = victim.health.hp - bullet.damage_amount
 				
@@ -66,19 +67,27 @@ function bullet_broadcast_system:handle_hit_requests()
 					victim.health.hp = 0
 					
 					victim.health.on_death(victim)
+					
+					damage_bs:WriteBitstream(protocol.write_msg("DAMAGE_MESSAGE", {
+						victim_id = victim.replication.id,
+						amount = bullet.damage_amount
+					}))
+					
+					messages_bs:WriteBitstream(damage_bs)
 				end
 			end
+		
+			-- broadcast the fact of hitting and possibly applying damage
 			
-			print (#all_clients)
-			for j=1, #all_clients do
-				-- don't tell about it to the sender themself
-				if subject ~= all_clients[j] then
-					-- sending
-					print "sending"
-					all_clients[j].client.net_channel:post_reliable("HIT_INFO", {
-						victim_id = victim.replication.id,
-						bullet_id = bullet.global_id
-					})
+			-- only those are interested who were previously in proximity of the victim and thus remote_state exists
+			local all_clients = self.owner_entity_system.all_systems["client"].targets
+			
+			for client_entity, v in pairs(victim.replication.remote_states) do
+				if subject ~= client_entity then
+					client_entity.client.net_channel:post_reliable_bs(messages_bs)
+				else
+					-- the sender themself will know only about the damage applied
+					client_entity.client.net_channel:post_reliable_bs(damage_bs)
 				end
 			end
 		
