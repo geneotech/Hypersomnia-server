@@ -167,7 +167,12 @@ function server_class:new_client(new_guid)
 	
 	new_controlled_character.health.on_death = function(this)
 		--self.entity_system_instance:post_remove(this)
+		this.replication:broadcast_reliable(protocol.write_msg("DAMAGE_MESSAGE", {
+					victim_id = this.replication.id,
+					amount = this.health.hp - 100
+				}))
 		this.health.hp = 100
+				
 		this.cpp_entity.physics.body:SetTransform(to_meters(self.current_map.teleport_shuffler:next_value().pos), 0)
 	end
 	

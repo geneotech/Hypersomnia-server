@@ -52,42 +52,30 @@ function bullet_broadcast_system:handle_hit_requests()
 		local bullet = existing_bullets[local_bullet_id]
 		
 		if victim ~= nil and bullet ~= nil then
-			local messages_bs = BitStream()
-			local damage_bs = BitStream()
-			
-			messages_bs:WriteBitstream(protocol.write_msg("HIT_INFO", {
+			-- the sender themself will know only about the damage applied so exclude him now
+			victim.replication:broadcast_reliable(protocol.write_msg("HIT_INFO", {
 				victim_id = victim.replication.id,
 				bullet_id = bullet.global_id
-			}))
+			}), subject)
 					
 			if victim.health ~= nil then
-				victim.health.hp = victim.health.hp - bullet.damage_amount
+				if victim.health.hp - bullet.damage_amount < 0 then
+					bullet.damage_amount = victim.health.hp
+				end
 				
-				if victim.health.hp <= 0 then
-					victim.health.hp = 0
+				if bullet.damage_amount > 0 then
+					victim.health.hp = victim.health.hp - bullet.damage_amount
 					
-					victim.health.on_death(victim)
-					
-					damage_bs:WriteBitstream(protocol.write_msg("DAMAGE_MESSAGE", {
+					victim.replication:broadcast_reliable(protocol.write_msg("DAMAGE_MESSAGE", {
 						victim_id = victim.replication.id,
 						amount = bullet.damage_amount
 					}))
-					
-					messages_bs:WriteBitstream(damage_bs)
-				end
-			end
-		
-			-- broadcast the fact of hitting and possibly applying damage
-			
-			-- only those are interested who were previously in proximity of the victim and thus remote_state exists
-			local all_clients = self.owner_entity_system.all_systems["client"].targets
-			
-			for client_entity, v in pairs(victim.replication.remote_states) do
-				if subject ~= client_entity then
-					client_entity.client.net_channel:post_reliable_bs(messages_bs)
-				else
-					-- the sender themself will know only about the damage applied
-					client_entity.client.net_channel:post_reliable_bs(damage_bs)
+						
+					if victim.health.hp <= 0 then
+						victim.health.hp = 0
+						
+						victim.health.on_death(victim)	
+					end
 				end
 			end
 		

@@ -1,5 +1,13 @@
 replication_system = inherits_from (processing_system)
 
+function components.replication:broadcast_reliable(output_bs, exclude_client)
+	for client_entity, v in pairs(self.remote_states) do
+		if client_entity ~= exclude_client then
+			client_entity.client.net_channel:post_reliable_bs(output_bs)
+		end
+	end		
+end
+
 function replication_system:constructor() 
 	self.transmission_id_generator = id_generator_ushort()
 	self.object_by_id = {}
