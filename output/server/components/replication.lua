@@ -15,4 +15,6 @@ function components.replication:constructor(init)
 	self.remote_states = {}
 	
 	self.public_group_name = "PUBLIC"
+	
+	self.sub_entities = {}
 end

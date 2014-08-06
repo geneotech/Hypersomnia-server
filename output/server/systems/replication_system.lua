@@ -49,7 +49,17 @@ end
 
 function replication_system:get_targets_of_interest(subject_client)
 	-- here should follow proximity checks
-	return self.targets
+	
+	-- pseudo proximity taking only objects with physics components
+	local proximity_targets = {}
+	
+	for i=1, #self.targets do
+		if self.targets[i].cpp_entity.physics ~= nil then
+			proximity_targets[#proximity_targets + 1] = self.targets[i]
+		end
+	end
+	
+	return proximity_targets
 end
 
 function replication_system:update_replicas()
@@ -135,12 +145,11 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 		local num_targets = #targets_of_interest
 		
 		for i=1, num_targets do
-			local depends_on = targets_of_interest[i].replication.depends_on
+			local dependent_entities = targets_of_interest[i].replication.sub_entities
 			
-			if depends_on ~= nil then
-				for j=1, #depends_on do
-					targets_of_interest[#targets_of_interest + 1] = depends_on[j]
-				end
+			for k, v in pairs (dependent_entities) do
+				print(k)
+				targets_of_interest[#targets_of_interest + 1] = v
 			end
 		end
 		

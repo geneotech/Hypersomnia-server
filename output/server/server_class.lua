@@ -139,12 +139,12 @@ function server_class:new_client(new_guid)
 	local new_gun = components.create_components {
 		replication = {
 			module_sets = {
-				DROPPED_PUBLIC = {
+				PUBLIC = {
 					replica = public_dropped_gun_modules,
 					archetype_name = "m4a1"
 				},
 				
-				PUBLIC = {
+				OWNED_PUBLIC = {
 					replica = public_owned_gun_modules,
 					archetype_name = "m4a1"
 				},
