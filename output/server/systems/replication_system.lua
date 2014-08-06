@@ -8,6 +8,18 @@ function components.replication:broadcast_reliable(output_bs, exclude_client)
 	end		
 end
 
+function components.replication:switch_public_group(new_public_group)
+	if new_public_group ~= self.public_group_name then
+		for client_entity, v in pairs(self.remote_states) do
+			if v.group_name == self.public_group_name then
+				self.remote_states[client_entity] = nil
+			end
+		end
+		
+		self.public_group_name = new_public_group
+	end
+end
+
 function replication_system:constructor() 
 	self.transmission_id_generator = id_generator_ushort()
 	self.object_by_id = {}
@@ -136,15 +148,18 @@ function replication_system:update_state_for_client(subject_client)
 					self:write_new_object(id, archetype_id, replica, new_objects)
 					
 					-- holds a set of dirty flags
-					states[subject_client] = {}
+					states[subject_client] = {
+						dirty_flags = {},
+						group_name = target_group
+					}
 					
 					for k, v in pairs(replica) do
 						-- hold dirty flags field-wise
-						states[subject_client][k] = v:get_all_marked(client_channel:next_unreliable_sequence())
+						states[subject_client].dirty_flags[k] = v:get_all_marked(client_channel:next_unreliable_sequence())
 					end
 				end
 				
-				if self:write_object_state(id, replica, states[subject_client], client_channel, updated_objects) > 0 then
+				if self:write_object_state(id, replica, states[subject_client].dirty_flags, client_channel, updated_objects) > 0 then
 					num_updated_objects = num_updated_objects + 1
 				end
 				
