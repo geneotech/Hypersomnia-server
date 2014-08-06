@@ -20,6 +20,22 @@ function components.replication:switch_public_group(new_public_group)
 	end
 end
 
+function components.replication:switch_group_for_client(new_group, target_client)
+	local remote_state = self.remote_states[target_client]
+
+	if remote_state ~= nil and new_group ~= remote_state.group_name then	
+		-- if the groups differ, re-transmit the initial state
+		self.remote_states[target_client] = nil
+		
+		if new_group == self.public_group_name then
+			-- simply map it to public
+			target_client.client.group_by_id[self.id] = nil
+		else
+			target_client.client.group_by_id[self.id] = new_group
+		end
+	end
+end
+
 function replication_system:constructor() 
 	self.transmission_id_generator = id_generator_ushort()
 	self.object_by_id = {}
