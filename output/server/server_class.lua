@@ -15,13 +15,19 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\crosshair_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\client_info_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\health_sync.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\wield_sync.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\gun_sync.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\health.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\wield.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\item.lua")
 --dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\client_info.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\wield_system.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\item_system.lua")
 
 dofile "server\\systems\\client_controller_system.lua"
 dofile "server\\systems\\client_system.lua"
@@ -44,7 +50,9 @@ function server_class:constructor()
 	
 	self.entity_system_instance:register_messages {
 		"network_message",
-		"shot_message"
+		"shot_message",
+		"item_ownership",
+		"pick_item_request"
 	}
 	
 	self.entity_system_instance:register_messages (protocol.message_names)
@@ -58,6 +66,8 @@ function server_class:constructor()
 	self.systems.orientation = orientation_system:create()
 	self.systems.weapon = weapon_system:create(nil, nil)
 	self.systems.bullet_broadcast = bullet_broadcast_system:create()
+	self.systems.wield = wield_system:create()
+	self.systems.item = item_system:create(false)
 	
 	self.entity_system_instance:register_systems(self.systems)
 	
@@ -86,6 +96,7 @@ function server_class:set_current_map(map_filename, loader_filename)
 	}
 	
 	self.systems.weapon.physics = self.current_map.world_object.physics_system
+	self.systems.item.world_object = self.current_map.world_object
 	
 	create_weapons(self.current_map, false)
 	
@@ -97,19 +108,23 @@ end
 
 function server_class:new_client(new_guid)
 	local world_character = world_archetypes.create_player(self.current_map, self.current_map.teleport_shuffler:next_value().pos)
-
+	
 	local public_character_modules = {}
 	public_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
 	public_character_modules["crosshair"] = replication_module:create(protocol.replication_tables.crosshair)
 	public_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
+	public_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
 
 	local owner_character_modules = {}
 	owner_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
 	owner_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
+	owner_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
+	
+	local owner_gun_modules = {}
+	owner_gun_modules["gun_init_info"] = replication_module:create(protocol.replication_tables.gun_init_info)
 	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
-
 	
 	local new_client = components.create_components {
 		client = {
@@ -126,6 +141,44 @@ function server_class:new_client(new_guid)
 		--		}
 		--	}
 		--}
+	}
+	
+	local new_gun = components.create_components {
+		replication = {
+			module_sets = {
+				PUBLIC = {
+					replica = {},
+					archetype_name = "m4a1"
+				},
+					
+				OWNER = {
+					replica = owner_gun_modules,
+					archetype_name = "m4a1"
+				}
+			}
+		},
+		
+		weapon = self.current_map.weapons.m4a1,
+		
+		item = {
+			physics_table = {
+				body_type = Box2D.b2_dynamicBody,
+				
+				body_info = {
+					filter = filters.DROPPED_ITEM,
+					shape_type = physics_info.RECT,
+					rect_size = vec2(98, 36),
+					
+					linear_damping = 4,
+					angular_damping = 4,
+					fixed_rotation = false,
+					density = 0.1,
+					friction = 0,
+					restitution = 0.4,
+					sensor = false
+				}
+			}
+		}
 	}
 		
 	local new_controlled_character = components.create_components {
@@ -155,13 +208,23 @@ function server_class:new_client(new_guid)
 		
 		orientation = {},
 		
-		weapon = self.current_map.weapons.m4a1
+		wield = {}
 	}
 	
 	self.entity_system_instance:add_entity(new_client)
+	self.entity_system_instance:add_entity(new_gun)
 	self.entity_system_instance:add_entity(new_controlled_character)
 	
 	new_client.client.controlled_object = new_controlled_character
+	
+	--new_controlled_character.wield.wielded_item = new_gun
+	self.entity_system_instance:post_table("item_ownership", { 
+		subject = new_controlled_character,
+		item = new_gun,
+		pick = true
+	})
+	
+	new_gun.weapon.current_rounds = 15
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
@@ -244,6 +307,9 @@ function server_class:loop()
 	self.systems.client_controller:update()
 	
 	self.systems.orientation:update()
+	
+	self.systems.wield:update()
+	self.systems.wield:broadcast_item_ownership()
 	
 	self.systems.bullet_broadcast:translate_shot_requests()
 	self.systems.weapon:update()

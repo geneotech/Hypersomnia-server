@@ -9,11 +9,14 @@ function bullet_broadcast_system:translate_shot_requests()
 	
 	for i=1, #msgs do
 		local character = msgs[i].subject.client.controlled_object
+		local wielded_item = character.wield.wielded_item
 	
-		table.insert(character.weapon.buffered_actions, { trigger = components.weapon.triggers.SHOOT, premade_shot = {
-			position = msgs[i].data.position,
-			rotation = msgs[i].data.rotation
-		}})
+		if wielded_item.weapon ~= nil then
+			table.insert(wielded_item.weapon.buffered_actions, { trigger = components.weapon.triggers.SHOOT, premade_shot = {
+				position = msgs[i].data.position,
+				rotation = msgs[i].data.rotation
+			}})
+		end
 	end
 end
 
@@ -91,9 +94,9 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 	for i=1, #msgs do
 		-- here, we should perform a proximity check for the processed bullet(s)
 		local subject = msgs[i].subject
-		local client_entity = subject.client_controller.owner_client
+		local character = subject.item.ownership
+		local client_entity = character.client_controller.owner_client
 		local client = client_entity.client
-		local character = client.controlled_object
 		
 		-- invalidate old bullets as we go
 		self:invalidate_old_bullets(client)
