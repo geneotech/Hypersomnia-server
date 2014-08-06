@@ -13,4 +13,6 @@ function components.replication:constructor(init)
 	-- true - up to date
 	-- nil - this object was not yet transmitted to a given client
 	self.remote_states = {}
+	
+	self.public_group_name = "PUBLIC"
 end

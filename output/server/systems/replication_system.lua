@@ -124,7 +124,7 @@ function replication_system:update_state_for_client(subject_client)
 				local states = sync.remote_states
 				
 				local target_group = subject_client.client.group_by_id[id]
-				if target_group == nil then target_group = "PUBLIC" end
+				if target_group == nil then target_group = sync.public_group_name end
 				
 				local replica = sync.module_sets[target_group].replica
 				local archetype_id = protocol.archetype_library[sync.module_sets[target_group].archetype_name]

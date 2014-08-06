@@ -15,7 +15,7 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\movement_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\crosshair_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\client_info_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\health_sync.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\wield_sync.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\item_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\gun_sync.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
@@ -113,15 +113,22 @@ function server_class:new_client(new_guid)
 	public_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
 	public_character_modules["crosshair"] = replication_module:create(protocol.replication_tables.crosshair)
 	public_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
-	public_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
+	--public_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
 
 	local owner_character_modules = {}
 	owner_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
 	owner_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
-	owner_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
+	--owner_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
 	
 	local owner_gun_modules = {}
 	owner_gun_modules["gun_init_info"] = replication_module:create(protocol.replication_tables.gun_init_info)
+	owner_gun_modules["item"] = replication_module:create(protocol.replication_tables.item)
+	
+	local public_owned_gun_modules = {}
+	owner_gun_modules["item"] = replication_module:create(protocol.replication_tables.item)
+	
+	local public_dropped_gun_modules = {}
+	owner_gun_modules["item"] = replication_module:create(protocol.replication_tables.item)
 	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
@@ -146,8 +153,13 @@ function server_class:new_client(new_guid)
 	local new_gun = components.create_components {
 		replication = {
 			module_sets = {
+				DROPPED_PUBLIC = {
+					replica = public_dropped_gun_modules,
+					archetype_name = "m4a1"
+				},
+				
 				PUBLIC = {
-					replica = {},
+					replica = public_owned_gun_modules,
 					archetype_name = "m4a1"
 				},
 					
