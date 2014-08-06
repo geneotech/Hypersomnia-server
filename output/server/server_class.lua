@@ -290,6 +290,11 @@ function server_class:loop()
 	cpp_world:process_all_systems()
 	cpp_world:render()
 	
+	self.systems.protocol:handle_incoming_commands()
+	
+	self.systems.wield:update()
+	self.systems.wield:broadcast_item_ownership()
+	
 	if #self.systems.client.targets > 0 and self:update_ready() then
 		self.systems.client:update_replicas_and_states()
 		
@@ -299,15 +304,11 @@ function server_class:loop()
 		self.systems.client:send_all_pending_data()		
 	end
 	
-	self.systems.protocol:handle_incoming_commands()
-	
 	-- some systems may post reliable commands because of the incoming network messages
 	self.systems.client_controller:update()
 	
 	self.systems.orientation:update()
 	
-	self.systems.wield:update()
-	self.systems.wield:broadcast_item_ownership()
 	
 	self.systems.bullet_broadcast:translate_shot_requests()
 	self.systems.weapon:update()

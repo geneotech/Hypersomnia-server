@@ -38,7 +38,7 @@ function client_system:update_replicas_and_states()
 		-- right away handles sending initial state for newly-connected clients
 		-- updates states of changing (or new) objects in proximity
 		-- may post some reliable messages to the client component
-		replication:update_state_for_client(self.targets[i])
+		replication:update_state_for_client(self.targets[i], true)
 	end
 end
 

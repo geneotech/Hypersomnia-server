@@ -116,9 +116,13 @@ function replication_system:write_object_state(id, replica, dirty_flags, client_
 	return modules_updated
 end
 
-function replication_system:update_state_for_client(subject_client)
+function replication_system:update_state_for_client(subject_client, post_recent_state, custom_targets)
 	local client_channel = subject_client.client.net_channel
 	local targets_of_interest = self:get_targets_of_interest(subject_client)
+	
+	if custom_targets ~= nil then
+		targets_of_interest = custom_targets
+	end
 	
 	if #targets_of_interest > 0 then
 		local new_objects = BitStream()
@@ -175,8 +179,10 @@ function replication_system:update_state_for_client(subject_client)
 					end
 				end
 				
-				if self:write_object_state(id, replica, states[subject_client].dirty_flags, client_channel, updated_objects) > 0 then
-					num_updated_objects = num_updated_objects + 1
+				if post_recent_state then
+					if self:write_object_state(id, replica, states[subject_client].dirty_flags, client_channel, updated_objects) > 0 then
+						num_updated_objects = num_updated_objects + 1
+					end
 				end
 				
 				ids_processed[id] = true
@@ -196,18 +202,20 @@ function replication_system:update_state_for_client(subject_client)
 			client_channel:post_reliable_bs(output_bs)
 		end
 		
-		-- send state updates reliably-sequenced
-		if num_updated_objects > 0 then	
-			local state_update_bs = protocol.write_msg("STATE_UPDATE", {
-				object_count = num_updated_objects,
-				bits = updated_objects:size()
-			})
-			
-			state_update_bs:name_property("all objects")
-			state_update_bs:WriteBitstream(updated_objects)
-			
-			client_channel.sender.request_ack_for_unreliable = true
-			client_channel:post_unreliable_bs(state_update_bs)
+		if post_recent_state then
+			-- send state updates reliably-sequenced
+			if num_updated_objects > 0 then	
+				local state_update_bs = protocol.write_msg("STATE_UPDATE", {
+					object_count = num_updated_objects,
+					bits = updated_objects:size()
+				})
+				
+				state_update_bs:name_property("all objects")
+				state_update_bs:WriteBitstream(updated_objects)
+				
+				client_channel.sender.request_ack_for_unreliable = true
+				client_channel:post_unreliable_bs(state_update_bs)
+			end
 		end
 	end
 end
