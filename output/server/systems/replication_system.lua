@@ -23,16 +23,16 @@ end
 function components.replication:switch_group_for_client(new_group, target_client)
 	local remote_state = self.remote_states[target_client]
 
+	if new_group == self.public_group_name then
+		-- simply map it to public
+		target_client.client.group_by_id[self.id] = nil
+	else
+		target_client.client.group_by_id[self.id] = new_group
+	end
+		
 	if remote_state ~= nil and new_group ~= remote_state.group_name then	
 		-- if the groups differ, re-transmit the initial state
-		self.remote_states[target_client] = nil
-		
-		if new_group == self.public_group_name then
-			-- simply map it to public
-			target_client.client.group_by_id[self.id] = nil
-		else
-			target_client.client.group_by_id[self.id] = new_group
-		end
+		self.remote_states[target_client] = nil		
 	end
 end
 
@@ -148,7 +148,6 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			local dependent_entities = targets_of_interest[i].replication.sub_entities
 			
 			for k, v in pairs (dependent_entities) do
-				print(k)
 				targets_of_interest[#targets_of_interest + 1] = v
 			end
 		end
