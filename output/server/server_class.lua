@@ -109,26 +109,15 @@ end
 function server_class:new_client(new_guid)
 	local world_character = world_archetypes.create_player(self.current_map, self.current_map.teleport_shuffler:next_value().pos)
 	
-	local public_character_modules = {}
-	public_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
-	public_character_modules["crosshair"] = replication_module:create(protocol.replication_tables.crosshair)
-	public_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
-	--public_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
+	local public_character_modules = create_replica { "movement", "crosshair", "health" }
 
-	local owner_character_modules = {}
-	owner_character_modules["movement"] = replication_module:create(protocol.replication_tables.movement)
-	owner_character_modules["health"] = replication_module:create(protocol.replication_tables.health)
-	--owner_character_modules["wield"] = replication_module:create(protocol.replication_tables.wield)
+	local owner_character_modules = create_replica { "movement", "health" }
 	
-	local owner_gun_modules = {}
-	owner_gun_modules["gun_init_info"] = replication_module:create(protocol.replication_tables.gun_init_info)
-	owner_gun_modules["item"] = replication_module:create(protocol.replication_tables.item)
+	local owner_gun_modules = create_replica { "gun_init_info", "item" }
 	
-	local public_owned_gun_modules = {}
-	owner_gun_modules["item"] = replication_module:create(protocol.replication_tables.item)
+	local public_owned_gun_modules = create_replica { "item" }
 	
-	local public_dropped_gun_modules = {}
-	owner_gun_modules["item"] = replication_module:create(protocol.replication_tables.item)
+	local public_dropped_gun_modules = create_replica { "item" }
 	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
