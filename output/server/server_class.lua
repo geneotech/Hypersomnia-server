@@ -67,7 +67,7 @@ function server_class:constructor()
 	self.systems.weapon = weapon_system:create(nil, nil)
 	self.systems.bullet_broadcast = bullet_broadcast_system:create()
 	self.systems.wield = wield_system:create()
-	self.systems.item = item_system:create(false)
+	self.systems.item = item_system:create()
 	
 	self.entity_system_instance:register_systems(self.systems)
 	
@@ -114,7 +114,7 @@ function server_class:new_client(new_guid)
 	
 	local owner_gun_modules = create_replica { "gun_init_info", "item" }
 	local public_owned_gun_modules = create_replica { "item" }
-	local public_dropped_gun_modules = create_replica { "item" }
+	local public_dropped_gun_modules = create_replica { "item", "movement" }
 	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
@@ -156,27 +156,8 @@ function server_class:new_client(new_guid)
 			}
 		},
 		
-		weapon = self.current_map.weapons.m4a1,
-		
-		item = {
-			physics_table = {
-				body_type = Box2D.b2_dynamicBody,
-				
-				body_info = {
-					filter = filters.DROPPED_ITEM,
-					shape_type = physics_info.RECT,
-					rect_size = vec2(98, 36),
-					
-					linear_damping = 4,
-					angular_damping = 4,
-					fixed_rotation = false,
-					density = 0.1,
-					friction = 0,
-					restitution = 0.4,
-					sensor = false
-				}
-			}
-		}
+		weapon = self.current_map.weapons.m4a1.weapon_info,
+		item = self.current_map.weapons.m4a1.item_info
 	}
 		
 	local new_controlled_character = components.create_components {
@@ -215,12 +196,13 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.controlled_object = new_controlled_character
 	
-	--new_controlled_character.wield.wielded_item = new_gun
 	self.entity_system_instance:post_table("item_ownership", { 
 		subject = new_controlled_character,
 		item = new_gun,
 		pick = true
 	})
+	
+	new_gun.cpp_entity.physics.body:SetTransform(to_meters(vec2(30, 30)), 0.1)
 	
 	new_gun.weapon.current_rounds = 15
 	
