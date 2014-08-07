@@ -114,7 +114,7 @@ function server_class:new_client(new_guid)
 	
 	local owner_gun_modules = create_replica { "gun_init_info", "item" }
 	local public_owned_gun_modules = create_replica { "item" }
-	local public_dropped_gun_modules = create_replica { "item", "movement" }
+	local public_dropped_gun_modules = create_replica { "item", "movement_rotated" }
 	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
@@ -202,7 +202,7 @@ function server_class:new_client(new_guid)
 		pick = true
 	})
 	
-	new_gun.cpp_entity.physics.body:SetTransform(to_meters(vec2(30, 30)), 0.1)
+	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
 	
 	new_gun.weapon.current_rounds = 15
 	
@@ -274,6 +274,7 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
+	self.systems.wield:handle_pick_requests()
 	self.systems.wield:update()
 	self.systems.wield:broadcast_item_ownership()
 	

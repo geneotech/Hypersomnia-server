@@ -11,7 +11,7 @@ function bullet_broadcast_system:translate_shot_requests()
 		local character = msgs[i].subject.client.controlled_object
 		local wielded_item = character.wield.wielded_item
 	
-		if wielded_item.weapon ~= nil then
+		if wielded_item ~= nil and wielded_item.weapon ~= nil then
 			table.insert(wielded_item.weapon.buffered_actions, { trigger = components.weapon.triggers.SHOOT, premade_shot = {
 				position = msgs[i].data.position,
 				rotation = msgs[i].data.rotation
@@ -45,7 +45,6 @@ function bullet_broadcast_system:handle_hit_requests()
 		local msg = msgs[i]
 		local subject = msg.subject
 		local client = subject.client
-		local character = client.controlled_object
 		
 		self:invalidate_old_bullets(client)
 		
