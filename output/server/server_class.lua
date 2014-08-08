@@ -208,6 +208,14 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
+	new_controlled_character.wield.on_drop = function (subject, dropped_item) 
+		local body = dropped_item.cpp_entity.physics.body
+		local force = (subject.orientation.crosshair_position - subject.cpp_entity.transform.current.pos):normalize() * 100
+		
+		body:ApplyLinearImpulse(to_meters(force), body:GetWorldCenter(), true)
+		body:ApplyAngularImpulse(4, true)
+	end
+	
 	new_controlled_character.health.on_death = function(this)
 		--self.entity_system_instance:post_remove(this)
 		this.replication:broadcast_reliable(protocol.write_msg("DAMAGE_MESSAGE", {
@@ -274,8 +282,9 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
-	self.systems.wield:handle_pick_requests()
+	self.systems.wield:handle_pick_requests(cpp_world)
 	self.systems.wield:update()
+	self.systems.wield:ownership_callbacks()
 	self.systems.wield:broadcast_item_ownership()
 	
 	if #self.systems.client.targets > 0 and self:update_ready() then
