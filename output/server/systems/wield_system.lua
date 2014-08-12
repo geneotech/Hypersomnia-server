@@ -63,6 +63,13 @@ function wield_system:broadcast_item_ownership()
 				local item = msg.item
 				local item_states = item.replication.remote_states
 				
+				subject.replication.sub_entities["ITEM_ENTITY"] = item
+				item.replication:switch_public_group("OWNED_PUBLIC")
+				
+				if subject.client_controller ~= nil then	
+					item.replication:switch_group_for_client("OWNER", subject.client_controller.owner_client)
+				end	
+				
 				-- get all clients who see either the item or the subject
 				local clients = {}
 				
@@ -92,6 +99,17 @@ function wield_system:broadcast_item_ownership()
 					})
 				end
 			elseif msg.drop == true then
+				local item = msg.dropped_item
+				
+				subject.replication.sub_entities["ITEM_ENTITY"] = nil
+				
+				item.replication:switch_public_group("PUBLIC")
+					
+				-- unmap that item				
+				if subject.client_controller ~= nil then
+					item.replication:switch_group_for_client("PUBLIC", subject.client_controller.owner_client)
+				end
+				
 				for client_entity, v in pairs(subject_states) do
 					client_entity.client.net_channel:post_reliable("ITEM_DROPPED", {
 						subject_id = subject.replication.id
