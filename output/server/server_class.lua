@@ -29,6 +29,8 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\wield_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\item_system.lua")
 
+dofile "server\\systems\\wield_system.lua"
+
 dofile "server\\systems\\client_controller_system.lua"
 dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\replication_system.lua"
@@ -209,11 +211,11 @@ function server_class:new_client(new_guid)
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
 	new_controlled_character.wield.on_drop = function (subject, dropped_item) 
-		local body = dropped_item.cpp_entity.physics.body
-		local force = (subject.orientation.crosshair_position - subject.cpp_entity.transform.current.pos):normalize() * 100
-		
-		body:ApplyLinearImpulse(to_meters(force), body:GetWorldCenter(), true)
-		body:ApplyAngularImpulse(4, true)
+		--local body = dropped_item.cpp_entity.physics.body
+		--local force = (subject.orientation.crosshair_position):normalize() * 100
+		--
+		--body:ApplyLinearImpulse(to_meters(force), body:GetWorldCenter(), true)
+		--body:ApplyAngularImpulse(4, true)
 	end
 	
 	new_controlled_character.health.on_death = function(this)
