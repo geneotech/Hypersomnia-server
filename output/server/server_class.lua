@@ -22,13 +22,14 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\health.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\wield.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\item.lua")
---dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\client_info.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\inventory.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\wield_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\item_system.lua")
 
+dofile "server\\systems\\inventory_system.lua"
 dofile "server\\systems\\wield_system.lua"
 
 dofile "server\\systems\\client_controller_system.lua"
@@ -53,7 +54,8 @@ function server_class:constructor()
 	self.entity_system_instance:register_messages {
 		"network_message",
 		"shot_message",
-		"item_ownership",
+		"wield_item",
+		"drop_item",
 		"pick_item_request"
 	}
 	
@@ -70,6 +72,7 @@ function server_class:constructor()
 	self.systems.bullet_broadcast = bullet_broadcast_system:create()
 	self.systems.wield = wield_system:create()
 	self.systems.item = item_system:create()
+	self.systems.inventory = inventory_system:create()
 	
 	self.entity_system_instance:register_systems(self.systems)
 	
@@ -141,7 +144,7 @@ function server_class:new_client(new_guid)
 	local new_gun = components.create_components {
 		replication = {
 			module_sets = {
-				PUBLIC = {
+				DROPPED_PUBLIC = {
 					replica = public_dropped_gun_modules,
 					archetype_name = "m4a1"
 				},
@@ -155,7 +158,9 @@ function server_class:new_client(new_guid)
 					replica = owner_gun_modules,
 					archetype_name = "m4a1"
 				}
-			}
+			},
+			
+			public_group_name = "DROPPED_PUBLIC"
 		},
 		
 		weapon = self.current_map.weapons.m4a1.weapon_info,
@@ -198,10 +203,9 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.controlled_object = new_controlled_character
 	
-	self.entity_system_instance:post_table("item_ownership", { 
+	self.entity_system_instance:post_table("wield_item", { 
 		subject = new_controlled_character,
-		item = new_gun,
-		pick = true
+		item = new_gun
 	})
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
@@ -284,10 +288,11 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
+	--self.systems.inventory:translate_drop_requests(cpp_world)
+	
 	self.systems.wield:handle_pick_requests(cpp_world)
 	self.systems.wield:update()
-	self.systems.wield:ownership_callbacks()
-	self.systems.wield:broadcast_item_ownership()
+	self.systems.wield:broadcast_item_selections()
 	
 	if #self.systems.client.targets > 0 and self:update_ready() then
 		self.systems.client:update_replicas_and_states()
