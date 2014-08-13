@@ -24,49 +24,57 @@ function wield_system:handle_pick_requests(world_object)
 		if character ~= nil then
 			local wield = character.wield
 			if wield ~= nil then
-				local found_item = self:get_item_in_range(world_object.physics_system, character.cpp_entity)
-				
-				-- subject validity ensured here
-				if wield.wielded_item ~= nil then
-					self.owner_entity_system:post_table("item_ownership", {
-						subject = character,
-						drop = true
-					})
-				end
-			
-				if found_item then
-					self.owner_entity_system:post_table("item_ownership", {
-						subject = character,
-						item = found_item,
-						pick = true
-					})
-				end
+				--local found_item = self:get_item_in_range(world_object.physics_system, character.cpp_entity)
+				--
+				---- subject validity ensured here
+				--if wield.wielded_item ~= nil then
+				--	self.owner_entity_system:post_table("wield_item", {
+				--		subject = character,
+				--		drop = true
+				--	})
+				--end
+			    --
+				--if found_item then
+				--	self.owner_entity_system:post_table("wield_item", {
+				--		subject = character,
+				--		item = found_item,
+				--		pick = true
+				--	})
+				--end
 			end
 		end
 	end
 end
 
-
-function wield_system:broadcast_item_ownership()
-	local msgs = self.owner_entity_system.messages["item_ownership"]
+function wield_system:broadcast_item_selections()
+	local msgs = self.owner_entity_system.messages["wield_item"]
 	local replication = self.owner_entity_system.all_systems["replication"]
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
 		if msg.succeeded == true then
 			local subject = msg.subject
-			local wield = subject.wield
 		
+			local item = msg.item
+			
+			-- will be cleared if "item" is nil
+			subject.replication.sub_entities["ITEM_ENTITY"] = item
+			
 			local subject_states = subject.replication.remote_states
 			
-			if msg.pick == true then
-				local item = msg.item
+			if item ~= nil then
+				local wield = subject.wield
 				local item_states = item.replication.remote_states
 				
-				subject.replication.sub_entities["ITEM_ENTITY"] = item
 				item.replication:switch_public_group("OWNED_PUBLIC")
 				
-				if subject.client_controller ~= nil then	
+				-- inventory system uses the same group, so if we have an inventory component,
+				-- OWNER group will already be set upon the item being picked and this call will have no effect
+				
+				-- alternatively, should we want to have different groups for a wielded object
+				-- and an object residing in the inventory, the inventory system will loop through successful
+				-- wielder changes and set its own group there
+				if subject.client_controller then	
 					item.replication:switch_group_for_client("OWNER", subject.client_controller.owner_client)
 				end	
 				
@@ -84,7 +92,7 @@ function wield_system:broadcast_item_ownership()
 				-- if either the item or the subject is invisible to the client,
 				-- post a creation message immediately
 				
-				-- remember that the initial state is replicated on the go
+				-- remember that the initial state is always replicated on the go
 				for j=1, #clients do
 					if item_states[clients[j]] == nil then
 						replication:update_state_for_client(clients[j], false, { item } )
@@ -92,30 +100,48 @@ function wield_system:broadcast_item_ownership()
 						replication:update_state_for_client(clients[j], false, { subject } )
 					end
 					
-					-- once we're ensured, post the pick message
-					clients[j].client.net_channel:post_reliable("ITEM_PICKED", {
+					-- once we're ensured, post the selection message
+					clients[j].client.net_channel:post_reliable("ITEM_SELECTED", {
 						subject_id = subject.replication.id,
 						item_id = item.replication.id
 					})
 				end
-			elseif msg.drop == true then
-				local item = msg.dropped_item
-				
-				subject.replication.sub_entities["ITEM_ENTITY"] = nil
-				
-				item.replication:switch_public_group("PUBLIC")
-					
-				-- unmap that item				
-				if subject.client_controller ~= nil then
-					item.replication:switch_group_for_client("PUBLIC", subject.client_controller.owner_client)
-				end
-				
+			else
+				-- if we UNSELECTED an item, only the clients seeing the subject are interested
 				for client_entity, v in pairs(subject_states) do
-					client_entity.client.net_channel:post_reliable("ITEM_DROPPED", {
+					client_entity.client.net_channel:post_reliable("ITEM_UNSELECTED", {
 						subject_id = subject.replication.id
 					})
 				end
 			end
+			
+			-- subject's subentity "ITEM_ENTITY" is already overwritten with nil or the newly selected item
+			-- the previously wielded item won't longer be replicated and if it will be in the future,
+			-- it is only by posting drop_item/wield_item message and thus
+			-- it will be assigned a meaningful replication group on the go
 		end
+	end
+
+	msgs = self.owner_entity_system.messages["drop_item"]
+	
+	for i=1, #msgs do
+		local msg = msgs[i]
+		local item = msg.item
+		
+		local wielder = item.item.wielder
+		
+		if wielder ~= nil then
+			wielder.replication.sub_entities["ITEM_ENTITY"] = nil
+							
+			if wielder.client_controller ~= nil then
+				item.replication:clear_group_for_client(wielder.client_controller.owner_client)
+			end
+		end
+		
+		item.replication:switch_public_group("DROPPED_PUBLIC")
+		
+		-- the item will be replicated on the next update as DROPPED_PUBLIC.
+		-- so we don't need to tell the clients about the DROP itself,
+		-- as they don't have to know where does the item come from.
 	end
 end
