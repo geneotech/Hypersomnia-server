@@ -14,7 +14,11 @@ function components.replication:constructor(init)
 	-- nil - this object was not yet transmitted to a given client
 	self.remote_states = {}
 	
-	self.public_group_name = "PUBLIC"
+	self.public_group_name = init.public_group_name 
+	
+	if self.public_group_name == nil then
+		self.public_group_name = "PUBLIC"
+	end 
 	
 	self.sub_entities = {}
 end
