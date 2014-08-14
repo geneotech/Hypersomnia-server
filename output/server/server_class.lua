@@ -211,6 +211,13 @@ function server_class:new_client(new_guid)
 		subject = new_controlled_character,
 		item = new_gun,
 		wielding_key = components.wield.keys.PRIMARY_WEAPON
+	})	
+	
+	self.entity_system_instance:post_table("item_wielder_change", { 
+		unwield = true,
+		subject = new_controlled_character,
+		--item = new_gun,
+		wielding_key = components.wield.keys.PRIMARY_WEAPON
 	})
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
@@ -220,10 +227,15 @@ function server_class:new_client(new_guid)
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
 	new_controlled_character.wield.on_item_unwielded = function (subject, dropped_item)
+		--print "force applied"
 		if dropped_item.cpp_entity.physics == nil then return end
 		
 		local body = dropped_item.cpp_entity.physics.body
 		local force = (subject.orientation.crosshair_position):normalize() * 100
+		
+		if subject.orientation.crosshair_position:length() < 0.01 then
+			force = vec2(100, 0)
+		end
 		
 		body:ApplyLinearImpulse(to_meters(force), body:GetWorldCenter(), true)
 		body:ApplyAngularImpulse(4, true)

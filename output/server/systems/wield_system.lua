@@ -56,6 +56,7 @@ function wield_system:broadcast_item_selections()
 		if msg.succeeded == true then
 			local subject = msg.subject
 			local item = msg.item
+			local subject_states = subject.replication.remote_states
 				
 			if msg.unwield then
 				subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = nil
@@ -74,8 +75,6 @@ function wield_system:broadcast_item_selections()
 				end
 			elseif msg.wield then
 				subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = item
-				
-				local subject_states = subject.replication.remote_states
 				
 				local wield = subject.wield
 				local item_states = item.replication.remote_states
