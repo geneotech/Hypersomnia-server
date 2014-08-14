@@ -54,8 +54,7 @@ function server_class:constructor()
 	self.entity_system_instance:register_messages {
 		"network_message",
 		"shot_message",
-		"wield_item",
-		"unwield_item",
+		"item_wielder_change",
 		
 		"pick_item",
 		"drop_item"
@@ -207,7 +206,8 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.controlled_object = new_controlled_character
 	
-	self.entity_system_instance:post_table("wield_item", { 
+	self.entity_system_instance:post_table("item_wielder_change", { 
+		wield = true,
 		subject = new_controlled_character,
 		item = new_gun,
 		wielding_key = components.wield.keys.PRIMARY_WEAPON
