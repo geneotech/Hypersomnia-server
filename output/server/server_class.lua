@@ -55,8 +55,10 @@ function server_class:constructor()
 		"network_message",
 		"shot_message",
 		"wield_item",
-		"drop_item",
-		"pick_item_request"
+		"unwield_item",
+		
+		"pick_item",
+		"drop_item"
 	}
 	
 	self.entity_system_instance:register_messages (protocol.message_names)
@@ -194,7 +196,9 @@ function server_class:new_client(new_guid)
 		
 		orientation = {},
 		
-		wield = {}
+		wield = {},
+		
+		inventory = {}
 	}
 	
 	self.entity_system_instance:add_entity(new_client)
@@ -205,7 +209,8 @@ function server_class:new_client(new_guid)
 	
 	self.entity_system_instance:post_table("wield_item", { 
 		subject = new_controlled_character,
-		item = new_gun
+		item = new_gun,
+		wielding_key = components.wield.keys.PRIMARY_WEAPON
 	})
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
@@ -214,7 +219,9 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
-	new_controlled_character.wield.on_drop = function (subject, dropped_item) 
+	new_controlled_character.wield.on_item_unwielded = function (subject, dropped_item)
+		if dropped_item.cpp_entity.physics == nil then return end
+		
 		local body = dropped_item.cpp_entity.physics.body
 		local force = (subject.orientation.crosshair_position):normalize() * 100
 		
@@ -288,7 +295,7 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
-	--self.systems.inventory:translate_drop_requests(cpp_world)
+	self.systems.inventory:translate_item_events(cpp_world)
 	
 	self.systems.wield:handle_pick_requests(cpp_world)
 	self.systems.wield:update()

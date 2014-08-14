@@ -9,7 +9,7 @@ function bullet_broadcast_system:translate_shot_requests()
 	
 	for i=1, #msgs do
 		local character = msgs[i].subject.client.controlled_object
-		local wielded_item = character.wield.wielded_item
+		local wielded_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
 	
 		if wielded_item ~= nil and wielded_item.weapon ~= nil then
 			table.insert(wielded_item.weapon.buffered_actions, { trigger = components.weapon.triggers.SHOOT, premade_shot = {
