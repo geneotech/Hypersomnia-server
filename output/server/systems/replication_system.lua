@@ -150,10 +150,17 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 		local num_targets = #targets_of_interest
 		
 		for i=1, num_targets do
-			local dependent_entities = targets_of_interest[i].replication.sub_entities
-			
+			local replication = targets_of_interest[i].replication
+			local dependent_entities = replication.sub_entities
+					
 			for k, v in pairs (dependent_entities) do
 				targets_of_interest[#targets_of_interest + 1] = v
+			end
+			
+			for group_name, group_table in pairs(replication.sub_entity_groups) do
+				for k, v in pairs(group_table) do
+					targets_of_interest[#targets_of_interest + 1] = v
+				end
 			end
 		end
 		

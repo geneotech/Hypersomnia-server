@@ -21,4 +21,8 @@ function components.replication:constructor(init)
 	end 
 	
 	self.sub_entities = {}
+	
+	self.sub_entity_groups = {
+		WIELDED_ENTITIES = {}
+	}
 end
