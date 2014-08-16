@@ -136,20 +136,29 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 		
 		local num_targets = #targets_of_interest
 		
-		for i=1, num_targets do
-			local replication = targets_of_interest[i].replication
-			local dependent_entities = replication.sub_entities
-					
-			for k, v in pairs (dependent_entities) do
-				targets_of_interest[#targets_of_interest + 1] = v
-			end
-			
-			for group_name, group_table in pairs(replication.sub_entity_groups) do
-				for k, v in pairs(group_table) do
-					targets_of_interest[#targets_of_interest + 1] = v
+		-- first pass - get all targets in proximity whose physical presence intersects the client's area of perception
+		-- plus all targets that were requested by "always_replicate"
+		
+		-- second pass - for every object get "parent_entity_to_replicate" if specified - this is for entities connected with each other
+		-- while they have a single parent
+		
+		-- third pass - traverse through sub-entity trees from targets of interest and add these sub-entities		
+
+		table.push_children(targets_of_interest,
+			function(parent_target, write_child) 
+				local replication = parent_target.replication
+						
+				for k, v in pairs (replication.sub_entities) do
+					write_child(v)
+				end
+				
+				for group_name, group_table in pairs(replication.sub_entity_groups) do
+					for k, v in pairs(group_table) do
+						write_child(v)
+					end
 				end
 			end
-		end
+		)
 		
 		-- all targets of interest are resolved by now		
 		local ids_processed = {}
