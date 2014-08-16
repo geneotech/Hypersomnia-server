@@ -18,8 +18,6 @@ function components.replication:clear_group_for_client(target_client)
 end
 
 function components.replication:switch_group_for_client(new_group, target_client)
-	local remote_state = self.remote_states[target_client]
-
 	if new_group == self.public_group_name then
 		-- simply map it to whatever public group later will this object specify
 		target_client.client.group_by_id[self.id] = nil
@@ -119,7 +117,8 @@ function replication_system:write_object_state(id, replica, dirty_flags, client_
 end
 
 function replication_system:update_state_for_client(subject_client, post_recent_state, custom_targets)
-	local client_channel = subject_client.client.net_channel
+	local client = subject_client.client
+	local client_channel = client.net_channel
 	local targets_of_interest = self:get_targets_of_interest(subject_client)
 	
 	if custom_targets ~= nil then
@@ -129,10 +128,11 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 	if #targets_of_interest > 0 then
 		local new_objects = BitStream()
 		local updated_objects = BitStream()
+		local deleted_objects = BitStream()
 		
 		local num_new_objects = 0
 		local num_updated_objects = 0
-		
+		local num_deleted_objects = 0
 		
 		local num_targets = #targets_of_interest
 		
@@ -151,6 +151,7 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			end
 		end
 		
+		-- all targets of interest are resolved by now		
 		local ids_processed = {}
 		
 		for i=1, #targets_of_interest do
@@ -162,7 +163,7 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			if ids_processed[id] == nil then
 				local states = sync.remote_states
 				
-				local target_group = subject_client.client.group_by_id[id]
+				local target_group = client.group_by_id[id]
 				if target_group == nil then target_group = sync.public_group_name end
 				
 				local replica = sync.module_sets[target_group].replica
@@ -197,7 +198,32 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			end
 		end
 		
+		for k, v in pairs(client.previous_targets_of_interest) do
+			-- if we were previously processing it, but not in this update
+			-- then delete this entity
+			if ids_processed[k] == nil then
+				num_deleted_objects = num_deleted_objects + 1
+				
+				deleted_objects:name_property("object_id")
+				deleted_objects:WriteUshort(v)
+			end
+		end
+		
+		client.previous_targets_of_interest = ids_processed
+		
 		-- send existential events reliably
+		if num_deleted_objects > 0 then	
+			local output_bs = protocol.write_msg("DELETE_OBJECTS", {
+				object_count = num_deleted_objects,
+				bits = deleted_objects:size()
+			})
+			
+			output_bs:name_property("all deleted objects")
+			output_bs:WriteBitstream(deleted_objects)
+			
+			client_channel:post_reliable_bs(output_bs)
+		end
+		
 		if num_new_objects > 0 then	
 			local output_bs = protocol.write_msg("NEW_OBJECTS", {
 				object_count = num_new_objects,

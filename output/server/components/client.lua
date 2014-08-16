@@ -16,5 +16,7 @@ function components.client:constructor(init)
 	set_rate(self, "update", 60)
 	
 	self.net_channel = reliable_channel_wrapper:create()
+	
+	self.previous_targets_of_interest = {}
 end
 
