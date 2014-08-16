@@ -9,15 +9,7 @@ function components.replication:broadcast_reliable(output_bs, exclude_client)
 end
 
 function components.replication:switch_public_group(new_public_group)
-	if new_public_group ~= self.public_group_name then
-		for client_entity, v in pairs(self.remote_states) do
-			if v.group_name == self.public_group_name then
-				self.remote_states[client_entity] = nil
-			end
-		end
-		
-		self.public_group_name = new_public_group
-	end
+	self.public_group_name = new_public_group
 end
 
 
@@ -33,11 +25,6 @@ function components.replication:switch_group_for_client(new_group, target_client
 		target_client.client.group_by_id[self.id] = nil
 	else
 		target_client.client.group_by_id[self.id] = new_group
-	end
-		
-	if remote_state ~= nil and new_group ~= remote_state.group_name then	
-		-- if the groups differ, re-transmit the initial state
-		self.remote_states[target_client] = nil		
 	end
 end
 
@@ -182,7 +169,8 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				local archetype_id = protocol.archetype_library[sync.module_sets[target_group].archetype_name]
 				
 				-- if the object doesn't exist on the remote peer
-				if states[subject_client] == nil then
+				-- or the group mismatches
+				if states[subject_client] == nil or target_group ~= states[subject_client].group_name then
 					num_new_objects = num_new_objects + 1	
 					
 					self:write_new_object(id, archetype_id, replica, new_objects)
