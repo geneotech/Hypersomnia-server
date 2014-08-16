@@ -140,21 +140,55 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 		-- plus all targets that were requested by "always_replicate"
 		
 		-- second pass - for every object get "parent_entity_to_replicate" if specified - this is for entities connected with each other
-		-- while they have a single parent
+		-- while there is a single parent having all of them as sub-entities
 		
-		-- third pass - traverse through sub-entity trees from targets of interest and add these sub-entities		
+		-- basic group resolving (after the second pass)
+		
+		local existing_group_targets = {}
+		
+		for i=1, #targets_of_interest do
+			local target = targets_of_interest[i]
+			local replication = target.replication
+			
+			local group = client.group_by_id[target.replication.id]
+			if group == nil then group = replication.public_group_name end
+			
+			-- "public_group_name" might be intentionally set to nil or an unexisting one
+			-- to prevent this entity from showing up publicly
+			if group ~= nil and replication.module_sets[group] ~= nil then
+				existing_group_targets[#existing_group_targets + 1] = target
+			end
+			
+			replication.group = group
+		end
+		
+		targets_of_interest = existing_group_targets
+		
+		-- third pass - traverse through sub-entity trees from targets of interest and add these sub-entities,
+		-- while ignoring these that can't be replicated
+				
 
 		table.push_children(targets_of_interest,
 			function(parent_target, write_child) 
+				-- this is a sub-entity, so we inherit the group from our parent
 				local replication = parent_target.replication
+				local group = replication.group
+				
+				-- don't propagate children if we don't provide a replica for this given group
+				-- group should never be nil
+				if replication.module_sets[group] == nil then
+					return
+				end
 						
 				for k, v in pairs (replication.sub_entities) do
 					write_child(v)
+					v.replication.group = group
 				end
 				
 				for group_name, group_table in pairs(replication.sub_entity_groups) do
 					for k, v in pairs(group_table) do
 						write_child(v)
+						v.replication.group = group
 					end
 				end
 			end
@@ -172,11 +206,11 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			if ids_processed[id] == nil then
 				local states = sync.remote_states
 				
-				local target_group = client.group_by_id[id]
-				if target_group == nil then target_group = sync.public_group_name end
+				local group_data = sync.module_sets[sync.group]
+				local replica = group_data.replica
+				sync.group = nil
 				
-				local replica = sync.module_sets[target_group].replica
-				local archetype_id = protocol.archetype_library[sync.module_sets[target_group].archetype_name]
+				local archetype_id = protocol.archetype_library[group_data.archetype_name]
 				
 				-- if the object doesn't exist on the remote peer
 				-- or the group mismatches
@@ -214,7 +248,7 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				num_deleted_objects = num_deleted_objects + 1
 				
 				deleted_objects:name_property("object_id")
-				deleted_objects:WriteUshort(v)
+				deleted_objects:WriteUshort(k)
 			end
 		end
 		
@@ -297,6 +331,9 @@ function replication_system:remove_entity(removed_entity)
 	for notified_client, state in pairs(remote_states) do
 		notified_client.client.net_channel:post_reliable_bs(out_bs)
 		new_remote_states[notified_client] = nil
+		
+		-- remove it from previous targets so it does not get deleted again
+		notified_client.client.previous_targets_of_interest[removed_id] = nil
 	end
 	
 	removed_entity.replication.remote_states = new_remote_states
