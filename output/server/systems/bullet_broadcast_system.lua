@@ -24,7 +24,6 @@ function bullet_broadcast_system:invalidate_old_bullets(subject)
 	for k, v in pairs(subject.local_bullet_id_to_global) do
 		if v.lifetime:get_milliseconds() > v.max_lifetime_ms then
 			subject.local_bullet_id_to_global[k] = nil
-			print "invalidating"
 		end
 	end
 end
@@ -35,7 +34,6 @@ function bullet_broadcast_system:handle_hit_requests()
 	local objects = self.owner_entity_system.all_systems["replication"].object_by_id
 	
 	for i=1, #msgs do
-		print "received hit request"
 		--print (msgs[i].data.bullet_id)
 		--print (msgs[i].data.victim_id)
 		--print (msgs[i].subject.weapon.existing_bullets[msgs[i].data.bullet_id] ~= nil)

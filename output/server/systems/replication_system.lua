@@ -174,21 +174,22 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				local replication = parent_target.replication
 				local group = replication.group
 				
-				-- don't propagate children if we don't provide a replica for this given group
-				-- group should never be nil
-				if replication.module_sets[group] == nil then
-					return
+				local function add_child(v)
+					-- don't propagate this child if it does not provide a replica for this given group
+					-- parent's group should never be nil after the first pass
+					if v.replication.module_sets[group] then
+						v.replication.group = group	
+						write_child(v)
+					end
 				end
-						
+				
 				for k, v in pairs (replication.sub_entities) do
-					write_child(v)
-					v.replication.group = group
+					add_child(v)
 				end
 				
 				for group_name, group_table in pairs(replication.sub_entity_groups) do
 					for k, v in pairs(group_table) do
-						write_child(v)
-						v.replication.group = group
+						add_child(v)
 					end
 				end
 			end

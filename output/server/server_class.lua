@@ -122,6 +122,8 @@ function server_class:new_client(new_guid)
 	local public_owned_gun_modules = create_replica { "item" }
 	local public_dropped_gun_modules = create_replica { "item", "movement_rotated" }
 	
+	local inventory_modules = create_replica { "item" }
+	
 	--local client_modules = {}
 	--client_modules["client_info"] = replication_module:create(protocol.replication_tables.client_info)
 	
@@ -150,7 +152,7 @@ function server_class:new_client(new_guid)
 					archetype_name = "m4a1"
 				},
 				
-				OWNED_PUBLIC = {
+				PUBLIC = {
 					replica = public_owned_gun_modules,
 					archetype_name = "m4a1"
 				},
@@ -195,14 +197,30 @@ function server_class:new_client(new_guid)
 		
 		orientation = {},
 		
-		wield = {},
+		wield = {}
+	}
+	
+	local new_character_inventory = components.create_components {
+		replication = {
+			module_sets = {
+				OWNER = {
+					replica = inventory_modules,
+					archetype_name = "INVENTORY" 
+				}
+			}
+		},
 		
-		inventory = {}
+		inventory = {},
+		
+		item = {},
+		
+		wield = {}
 	}
 	
 	self.entity_system_instance:add_entity(new_client)
-	self.entity_system_instance:add_entity(new_gun)
 	self.entity_system_instance:add_entity(new_controlled_character)
+	self.entity_system_instance:add_entity(new_gun)
+	self.entity_system_instance:add_entity(new_character_inventory)
 	
 	new_client.client.controlled_object = new_controlled_character
 	
@@ -211,14 +229,14 @@ function server_class:new_client(new_guid)
 		subject = new_controlled_character,
 		item = new_gun,
 		wielding_key = components.wield.keys.PRIMARY_WEAPON
-	})	
+	})		
 	
 	self.entity_system_instance:post_table("item_wielder_change", { 
-		unwield = true,
+		wield = true,
 		subject = new_controlled_character,
-		--item = new_gun,
-		wielding_key = components.wield.keys.PRIMARY_WEAPON
-	})
+		item = new_character_inventory,
+		wielding_key = components.wield.keys.INVENTORY
+	})	
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
 	
@@ -227,7 +245,6 @@ function server_class:new_client(new_guid)
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
 	new_controlled_character.wield.on_item_unwielded = function (subject, dropped_item)
-		--print "force applied"
 		if dropped_item.cpp_entity.physics == nil then return end
 		
 		local body = dropped_item.cpp_entity.physics.body
@@ -307,9 +324,9 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
-	self.systems.inventory:translate_item_events(cpp_world)
+	--self.systems.inventory:translate_item_events(cpp_world)
+	self.systems.inventory:handle_pick_requests(cpp_world)
 	
-	self.systems.wield:handle_pick_requests(cpp_world)
 	self.systems.wield:update()
 	self.systems.wield:broadcast_item_selections()
 	
