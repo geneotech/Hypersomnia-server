@@ -224,12 +224,12 @@ function server_class:new_client(new_guid)
 	
 	new_client.client.controlled_object = new_controlled_character
 	
-	self.entity_system_instance:post_table("item_wielder_change", { 
-		wield = true,
-		subject = new_controlled_character,
-		item = new_gun,
-		wielding_key = components.wield.keys.PRIMARY_WEAPON
-	})		
+	--self.entity_system_instance:post_table("item_wielder_change", { 
+	--	wield = true,
+	--	subject = new_controlled_character,
+	--	item = new_gun,
+	--	wielding_key = components.wield.keys.PRIMARY_WEAPON
+	--})		
 	
 	self.entity_system_instance:post_table("item_wielder_change", { 
 		wield = true,
@@ -324,8 +324,8 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
-	--self.systems.inventory:translate_item_events(cpp_world)
 	self.systems.inventory:handle_pick_requests(cpp_world)
+	self.systems.inventory:translate_item_events()
 	
 	self.systems.wield:update()
 	self.systems.wield:broadcast_item_selections()

@@ -207,9 +207,12 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			if ids_processed[id] == nil then
 				local states = sync.remote_states
 				
-				local group_data = sync.module_sets[sync.group]
-				local replica = group_data.replica
+				local target_group = sync.group
+				-- clear saved group info
 				sync.group = nil
+				
+				local group_data = sync.module_sets[target_group]
+				local replica = group_data.replica
 				
 				local archetype_id = protocol.archetype_library[group_data.archetype_name]
 				
