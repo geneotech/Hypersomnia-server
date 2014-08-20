@@ -44,26 +44,25 @@ function wield_system:broadcast_item_selections()
 				local clients = {}
 				
 				for client_entity, v in pairs(item_states) do
-					clients[#clients+1] = client_entity
+					clients[client_entity] = true
 				end
 				
 				for client_entity, v in pairs(subject_states) do
-					clients[#clients+1] = client_entity
+					clients[client_entity] = true
 				end
 				
 				-- if either the item or the subject is invisible to the client,
 				-- post a creation message immediately
 				
 				-- remember that the initial state is always replicated on the go
-				for j=1, #clients do
-					if item_states[clients[j]] == nil then
-						replication:update_state_for_client(clients[j], false, { item } )
-					elseif subject_states[clients[j]] == nil then
-						replication:update_state_for_client(clients[j], false, { subject } )
+				for client in pairs(clients) do
+					if item_states[client] == nil then
+						replication:update_state_for_client(client, false, { item } )
+					elseif subject_states[client] == nil then
+						replication:update_state_for_client(client, false, { subject } )
 					end
-					
 					-- once we're ensured, post the selection message
-					clients[j].client.net_channel:post_reliable("ITEM_WIELDED", {
+					client.client.net_channel:post_reliable("ITEM_WIELDED", {
 						subject_id = subject.replication.id,
 						item_id = item.replication.id,
 						wielding_key = msg.wielding_key
