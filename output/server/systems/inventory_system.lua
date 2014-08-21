@@ -64,7 +64,7 @@ function inventory_system:handle_item_requests(world_object)
 				self:select_item(subject_inventory, character, found_item, nil, exclude_client)
 			end
 		elseif msg.name == "HOLSTER_ITEM" then
-			local found_item = character.wield.wielded_items[components.wield.keys.INVENTORY]
+			local found_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
 			
 			if found_item then
 				self:holster_item(subject_inventory, character, found_item, nil, exclude_client)
