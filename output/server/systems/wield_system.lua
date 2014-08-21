@@ -33,13 +33,6 @@ function wield_system:broadcast_item_selections()
 				local wield = subject.wield
 				local item_states = item.replication.remote_states
 				
-				-- inventory system uses the same group, so if we have an inventory component,
-				-- OWNER group will already be set upon the item being picked and this call will have no effect
-				
-				-- alternatively, should we want to have different groups for a wielded object
-				-- and an object residing in the inventory, the inventory system will loop through successful
-				-- wielder changes and set its own group there
-				
 				-- get all clients who see either the item or the subject
 				local clients = {}
 				
@@ -61,12 +54,21 @@ function wield_system:broadcast_item_selections()
 					elseif subject_states[client] == nil then
 						replication:update_state_for_client(client, false, { subject } )
 					end
+					
+					-- it may happen that we couldn't replicate some of them, because
+					-- the client has no access to some either of the objects
+					
+					-- this happens for example for a client seeing somebody switching/holstering a weapon,
+					-- where he can't see the inventory that the item is wielded by
+					
 					-- once we're ensured, post the selection message
-					client.client.net_channel:post_reliable("ITEM_WIELDED", {
-						subject_id = subject.replication.id,
-						item_id = item.replication.id,
-						wielding_key = msg.wielding_key
-					})
+					if item_states[client] and subject_states[client] then
+						client.client.net_channel:post_reliable("ITEM_WIELDED", {
+							subject_id = subject.replication.id,
+							item_id = item.replication.id,
+							wielding_key = msg.wielding_key
+						})
+					end
 				end
 			end
 		end

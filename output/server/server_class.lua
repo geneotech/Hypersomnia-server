@@ -27,9 +27,12 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\inventory.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\wield_system.lua")
+
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\item_system.lua")
 
 dofile "server\\systems\\inventory_system.lua"
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\inventory_system_shared.lua")
+
 dofile "server\\systems\\wield_system.lua"
 
 dofile "server\\systems\\client_controller_system.lua"
@@ -231,10 +234,10 @@ function server_class:new_client(new_guid)
 		wielding_key = components.wield.keys.INVENTORY
 	})
 	
-	self.entity_system_instance:post_table("pick_item", { 
-		subject = new_controlled_character,
-		item = new_gun
-	})			
+	--self.entity_system_instance:post_table("pick_item", { 
+	--	subject = new_controlled_character,
+	--	item = new_gun
+	--})			
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
 	
@@ -324,7 +327,7 @@ function server_class:loop()
 	
 	self.systems.wield:update()
 	
-	self.systems.inventory:handle_pick_requests(cpp_world)
+	self.systems.inventory:handle_item_requests(cpp_world)
 	self.systems.inventory:translate_item_events()
 	
 	self.systems.wield:update()
