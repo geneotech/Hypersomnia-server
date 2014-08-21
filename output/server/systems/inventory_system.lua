@@ -19,8 +19,9 @@ function inventory_system:get_item_in_range(physics_system, what_entity, try_to_
 	return found_item
 end
 
-function inventory_system:handle_pick_requests(world_object)
+function inventory_system:handle_item_requests(world_object)
 	local msgs = self.owner_entity_system.messages["PICK_ITEM_REQUEST"]
+	local replication = self.owner_entity_system.all_systems["replication"]
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
@@ -52,22 +53,29 @@ function inventory_system:handle_pick_requests(world_object)
 			end
 		end
 	end
+	
+	msgs = self.owner_entity_system.messages["SELECT_ITEM_REQUEST"]
+	
+	for i=1, #msgs do
+		local msg = msgs[i]
+		local subject = msg.subject
+		local character = subject.client.controlled_object
+		
+		local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
+		local inventory = subject_inventory.inventory
+		
+		--local item = replication.object_by_id[msg.item_id]
+		print "SELECTION!"
+		print(msg.data.item_id)
+		local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
+		
+		if found_item then
+			print "selectable found!"
+			
+			self:select_item(subject_inventory, character, found_item)
+		end
+	end
 end
-
---function inventory_system:handle_item_requests()
---	local msgs = self.owner_entity_system.messages["PICK_ITEM_REQUEST"]
---	
---	for i=1, #msgs do
---		local msg = msgs[i]
---		local subject = msg.subject
---		local item = msg.item
---		
---		local inventory = subject.inventory
---		
---		inventory.available_items[item.replication.id] = item
---	end
---end
-
 
 function inventory_system:translate_item_events()
 	local msgs = self.owner_entity_system.messages["pick_item"]
@@ -84,8 +92,7 @@ function inventory_system:translate_item_events()
 			subject = inventory_subject,
 			item = msg.item,
 			wield = true,
-			wielding_key = item.replication.id,
-			wield_if_unwielded = true
+			wielding_key = item.replication.id
 		})
 	end
 	
