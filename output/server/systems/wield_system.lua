@@ -11,21 +11,28 @@ function wield_system:broadcast_item_selections()
 			local subject = msg.subject
 			local item = msg.item
 			local subject_states = subject.replication.remote_states
+			local owner_client;
+			
+			if subject.client_controller then
+				owner_client = subject.client_controller.owner_client
+			end
 				
 			if msg.unwield then
 				subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = nil
 				item.replication:switch_public_group("DROPPED_PUBLIC")
 				
-				if subject.client_controller ~= nil then
-					item.replication:clear_group_for_client(subject.client_controller.owner_client)
+				if owner_client then
+					item.replication:clear_group_for_client(owner_client)
 				end
 				
 				-- if we UNSELECTED an item, only the clients seeing the subject are interested
 				for client_entity, v in pairs(subject_states) do
-					client_entity.client.net_channel:post_reliable("ITEM_UNWIELDED", {
-						subject_id = subject.replication.id,
-						wielding_key = msg.wielding_key
-					})
+					if not msg.exclude_client or client_entity ~= msg.exclude_client then
+						client_entity.client.net_channel:post_reliable("ITEM_UNWIELDED", {
+							subject_id = subject.replication.id,
+							wielding_key = msg.wielding_key
+						})
+					end
 				end
 			elseif msg.wield then
 				subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = item
@@ -37,11 +44,15 @@ function wield_system:broadcast_item_selections()
 				local clients = {}
 				
 				for client_entity, v in pairs(item_states) do
-					clients[client_entity] = true
+					if not msg.exclude_client or client_entity ~= msg.exclude_client then
+						clients[client_entity] = true
+					end
 				end
 				
 				for client_entity, v in pairs(subject_states) do
-					clients[client_entity] = true
+					if not msg.exclude_client or client_entity ~= msg.exclude_client then
+						clients[client_entity] = true
+					end
 				end
 				
 				-- if either the item or the subject is invisible to the client,
