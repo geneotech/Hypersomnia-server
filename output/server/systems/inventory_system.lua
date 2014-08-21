@@ -20,59 +20,53 @@ function inventory_system:get_item_in_range(physics_system, what_entity, try_to_
 end
 
 function inventory_system:handle_item_requests(world_object)
-	local msgs = self.owner_entity_system.messages["PICK_ITEM_REQUEST"]
+	local msgs = self.owner_entity_system.messages["INVENTORY_REQUESTS"]
 	local replication = self.owner_entity_system.all_systems["replication"]
 	
 	for i=1, #msgs do
 		local msg = msgs[i]
 		local subject = msg.subject
 		local character = subject.client.controlled_object
-		
-		if character ~= nil then
-			local wield = character.wield
-			if wield ~= nil then
-				-- subject validity ensured here
-				local found_item = self:get_item_in_range(world_object.physics_system, character.cpp_entity)
-				
-				--
-				--if wield.wielded_item ~= nil then
-				--	self.owner_entity_system:post_table("wield_item", {
-				--		subject = character,
-				--		drop = true
-				--	})
-				--end
-			    --
-				if found_item then
-					print "found an item"
+		print ("inv req")
+		if msg.name == "PICK_ITEM_REQUEST" then
+			if character ~= nil then
+				local wield = character.wield
+				if wield ~= nil then
+					-- subject validity ensured here
+					local found_item = self:get_item_in_range(world_object.physics_system, character.cpp_entity)
 					
-					self.owner_entity_system:post_table("pick_item", {
-						subject = character,
-						item = found_item
-					})
+					--
+					--if wield.wielded_item ~= nil then
+					--	self.owner_entity_system:post_table("wield_item", {
+					--		subject = character,
+					--		drop = true
+					--	})
+					--end
+					--
+					if found_item then
+						print "found an item"
+						
+						self.owner_entity_system:post_table("pick_item", {
+							subject = character,
+							item = found_item
+						})
+					end
 				end
 			end
-		end
-	end
-	
-	msgs = self.owner_entity_system.messages["SELECT_ITEM_REQUEST"]
-	
-	for i=1, #msgs do
-		local msg = msgs[i]
-		local subject = msg.subject
-		local character = subject.client.controlled_object
-		
-		local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
-		local inventory = subject_inventory.inventory
-		
-		--local item = replication.object_by_id[msg.item_id]
-		print "SELECTION!"
-		print(msg.data.item_id)
-		local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
-		
-		if found_item then
-			print "selectable found!"
+		elseif msg.name == "SELECT_ITEM_REQUEST" then
+			local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
+			local inventory = subject_inventory.inventory
 			
-			self:select_item(subject_inventory, character, found_item)
+			--local item = replication.object_by_id[msg.item_id]
+			print "SELECTION!"
+			print(msg.data.item_id)
+			local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
+			
+			if found_item then
+				print "selectable found!"
+				
+				self:select_item(subject_inventory, character, found_item)
+			end
 		end
 	end
 end

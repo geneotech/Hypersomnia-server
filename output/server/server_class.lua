@@ -65,6 +65,13 @@ function server_class:constructor()
 	
 	self.entity_system_instance:register_messages (protocol.message_names)
 	
+	self.entity_system_instance:register_message_group ("INVENTORY_REQUESTS", {
+		"PICK_ITEM_REQUEST",
+		"SELECT_ITEM_REQUEST",
+		"HOLSTER_ITEM",
+		"DROP_ITEM_REQUEST"
+	})
+	
 	-- create all necessary systems
 	self.systems = {}
 	self.systems.replication = replication_system:create()
