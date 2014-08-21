@@ -27,7 +27,13 @@ function inventory_system:handle_item_requests(world_object)
 		local msg = msgs[i]
 		local subject = msg.subject
 		local character = subject.client.controlled_object
-		print ("inv req")
+		local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
+		
+		local exclude_client;
+		if character.client_controller then
+			exclude_client = character.client_controller.owner_client
+		end
+		
 		if msg.name == "PICK_ITEM_REQUEST" then
 			if character ~= nil then
 				local wield = character.wield
@@ -44,8 +50,6 @@ function inventory_system:handle_item_requests(world_object)
 					--end
 					--
 					if found_item then
-						print "found an item"
-						
 						self.owner_entity_system:post_table("pick_item", {
 							subject = character,
 							item = found_item
@@ -54,18 +58,16 @@ function inventory_system:handle_item_requests(world_object)
 				end
 			end
 		elseif msg.name == "SELECT_ITEM_REQUEST" then
-			local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
-			local inventory = subject_inventory.inventory
-			
-			--local item = replication.object_by_id[msg.item_id]
-			print "SELECTION!"
-			print(msg.data.item_id)
 			local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
 			
 			if found_item then
-				print "selectable found!"
-				
-				self:select_item(subject_inventory, character, found_item)
+				self:select_item(subject_inventory, character, found_item, nil, exclude_client)
+			end
+		elseif msg.name == "HOLSTER_ITEM" then
+			local found_item = character.wield.wielded_items[components.wield.keys.INVENTORY]
+			
+			if found_item then
+				self:holster_item(subject_inventory, character, found_item, nil, exclude_client)
 			end
 		end
 	end
