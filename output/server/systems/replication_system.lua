@@ -121,7 +121,7 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 	local client_channel = client.net_channel
 	local targets_of_interest = self:get_targets_of_interest(subject_client)
 	
-	if custom_targets ~= nil then
+	if custom_targets then
 		targets_of_interest = custom_targets
 	end
 	
@@ -245,18 +245,26 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 			end
 		end
 		
-		for k, v in pairs(client.previous_targets_of_interest) do
-			-- if we were previously processing it, but not in this update
-			-- then delete this entity
-			if ids_processed[k] == nil then
-				num_deleted_objects = num_deleted_objects + 1
-				
-				deleted_objects:name_property("object_id")
-				deleted_objects:WriteUshort(k)
+		-- if it's a mid-update pass, simply concatenate previous targets of interest
+		-- with the newly created on-the-go
+		if custom_targets then
+			for k, v in pairs(ids_processed) do
+				client.previous_targets_of_interest[k] = true
 			end
+		-- else, if it's a main update pass, remotely delete all objects that are already out of interest
+		else
+			for k, v in pairs(client.previous_targets_of_interest) do
+				-- if we were previously processing it, but not in this update
+				-- then delete this entity
+				if ids_processed[k] == nil then
+					num_deleted_objects = num_deleted_objects + 1
+					deleted_objects:name_property("object_id")
+					deleted_objects:WriteUshort(k)
+				end
+			end
+			
+			client.previous_targets_of_interest = ids_processed
 		end
-		
-		client.previous_targets_of_interest = ids_processed
 		
 		-- send existential events reliably
 		if num_deleted_objects > 0 then	
