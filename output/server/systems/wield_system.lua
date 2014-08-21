@@ -13,7 +13,7 @@ function wield_system:broadcast_changes(msg)
 			
 		if msg.unwield then
 			subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = nil
-			item.replication:switch_public_group("DROPPED_PUBLIC")
+			--item.replication:switch_public_group("DROPPED_PUBLIC")
 			
 			if owner_client then
 				item.replication:clear_group_for_client(owner_client)
@@ -54,9 +54,9 @@ function wield_system:broadcast_changes(msg)
 			
 			-- remember that the initial state is always replicated on the go
 			for client in pairs(clients) do
-				if item_states[client] == nil then
-					replication:update_state_for_client(client, false, { item } )
-				elseif subject_states[client] == nil then
+				-- either way we have to create the whole subject with all of its subentities,
+				-- the item included
+				if item_states[client] == nil or subject_states[client] == nil then
 					replication:update_state_for_client(client, false, { subject } )
 				end
 				
