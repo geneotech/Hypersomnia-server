@@ -87,6 +87,14 @@ function server_class:constructor()
 	
 	self.entity_system_instance:register_systems(self.systems)
 	
+	self.entity_system_instance:register_callbacks {
+		item_wielder_change = function(msg) 
+			self.systems.wield:handle_wielder_change(msg)
+			self.systems.wield:broadcast_changes(msg)
+		end
+	}
+	
+	
 	self.global_timer = timer()
 	
 	set_rate(self, "update", 60)
@@ -361,15 +369,9 @@ function server_class:loop()
 	
 	self.systems.protocol:handle_incoming_commands()
 	
-	self.systems.wield:update()
-	
 	self.systems.inventory:handle_item_requests(cpp_world)
 	self.systems.inventory:translate_item_events()
-	
-	self.systems.wield:update()
-	
-	self.systems.wield:broadcast_item_selections()
-	
+
 	if #self.systems.client.targets > 0 and self:update_ready() then
 		self.systems.client:update_replicas_and_states()
 		
@@ -383,7 +385,6 @@ function server_class:loop()
 	self.systems.client_controller:update()
 	
 	self.systems.orientation:update()
-	
 	
 	self.systems.bullet_broadcast:translate_shot_requests()
 	self.systems.weapon:update()
