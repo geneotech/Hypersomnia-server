@@ -69,6 +69,32 @@ function inventory_system:handle_item_requests(world_object)
 			if found_item then
 				self:holster_item(subject_inventory, character, found_item, nil, exclude_client)
 			end
+		elseif msg.name == "DROP_ITEM_REQUEST" then
+			local currently_wielded_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
+			
+			if currently_wielded_item and currently_wielded_item.replication.id == msg.data.item_id then
+				print "DROPPED IS WIELDED!"
+				
+				self.owner_entity_system:post_table("item_wielder_change", { 
+					unwield = true,
+					subject = character,
+					wielding_key = components.wield.keys.PRIMARY_WEAPON,
+						
+					["exclude_client"] = exclude_client 
+				})
+			else
+				local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
+			
+				if found_item then
+					self.owner_entity_system:post_table("item_wielder_change", { 
+						unwield = true,
+						subject = subject_inventory,
+						wielding_key = found_item.replication.id,
+						
+						["exclude_client"] = exclude_client 
+					})
+				end
+			end
 		end
 	end
 end

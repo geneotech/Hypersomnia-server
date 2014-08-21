@@ -140,6 +140,10 @@ function server_class:new_client(new_guid)
 	local public_owned_gun_modules = create_replica { "item" }
 	local public_dropped_gun_modules = create_replica { "item", "movement_rotated" }
 	
+	local owner_shotgun_modules = create_replica { "gun_init_info", "item" }
+	local public_owned_shotgun_modules = create_replica { "item" }
+	local public_dropped_shotgun_modules = create_replica { "item", "movement_rotated" }
+	
 	local inventory_modules = create_replica { "item" }
 	
 	--local client_modules = {}
@@ -192,17 +196,17 @@ function server_class:new_client(new_guid)
 		replication = {
 			module_sets = {
 				DROPPED_PUBLIC = {
-					replica = public_dropped_gun_modules,
+					replica = public_dropped_shotgun_modules,
 					archetype_name = "shotgun"
 				},
 				
 				PUBLIC = {
-					replica = public_owned_gun_modules,
+					replica = public_owned_shotgun_modules,
 					archetype_name = "shotgun"
 				},
 					
 				OWNER = {
-					replica = owner_gun_modules,
+					replica = owner_shotgun_modules,
 					archetype_name = "shotgun"
 				}
 			},
