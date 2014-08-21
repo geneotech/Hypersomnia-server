@@ -226,13 +226,22 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 					-- holds a set of dirty flags
 					states[subject_client] = {
 						dirty_flags = {},
-						group_name = target_group
+						group_name = target_group,
+						archetype_name = group_data.archetype_name
 					}
 					
 					for k, v in pairs(replica) do
 						-- hold dirty flags field-wise
 						states[subject_client].dirty_flags[k] = v:get_all_marked(client_channel:next_unreliable_sequence())
 					end
+					
+					local client_ident = "unknown"
+					if subject_client.client.controlled_object then
+						client_ident = subject_client.client.controlled_object.replication.id
+					end
+					
+					--print (debug.traceback())
+					print ("Client: " .. client_ident .. "\nCreating " .. group_data.archetype_name .. " from group: " .. target_group .. " with id: " .. id .. "\n")
 				end
 				
 				if post_recent_state then
@@ -260,6 +269,19 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 					num_deleted_objects = num_deleted_objects + 1
 					deleted_objects:name_property("object_id")
 					deleted_objects:WriteUshort(k)
+					
+					local object = self.object_by_id[k]
+					-- zero out the remote state so we know that it is to be created again
+					
+					local client_ident = "unknown"
+					if subject_client.client.controlled_object then
+						client_ident = subject_client.client.controlled_object.replication.id
+					end
+					
+					print ("Client: " .. client_ident .. "\nRemoving " .. object.replication.remote_states[subject_client].archetype_name .. " from group: " .. 
+					object.replication.remote_states[subject_client].group_name ..  " with id: " .. k .. "\n")
+					
+					object.replication.remote_states[subject_client] = nil
 				end
 			end
 			
