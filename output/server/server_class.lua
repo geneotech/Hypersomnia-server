@@ -179,6 +179,32 @@ function server_class:new_client(new_guid)
 		weapon = self.current_map.weapons.m4a1.weapon_info,
 		item = self.current_map.weapons.m4a1.item_info
 	}
+	
+	local new_shotgun = components.create_components {
+		replication = {
+			module_sets = {
+				DROPPED_PUBLIC = {
+					replica = public_dropped_gun_modules,
+					archetype_name = "shotgun"
+				},
+				
+				PUBLIC = {
+					replica = public_owned_gun_modules,
+					archetype_name = "shotgun"
+				},
+					
+				OWNER = {
+					replica = owner_gun_modules,
+					archetype_name = "shotgun"
+				}
+			},
+			
+			public_group_name = "DROPPED_PUBLIC"
+		},
+		
+		weapon = self.current_map.weapons.shotgun.weapon_info,
+		item = self.current_map.weapons.shotgun.item_info
+	}
 		
 	local new_controlled_character = components.create_components {
 		client_controller = {
@@ -230,6 +256,7 @@ function server_class:new_client(new_guid)
 	self.entity_system_instance:add_entity(new_client)
 	self.entity_system_instance:add_entity(new_controlled_character)
 	self.entity_system_instance:add_entity(new_gun)
+	self.entity_system_instance:add_entity(new_shotgun)
 	self.entity_system_instance:add_entity(new_character_inventory)
 	
 	new_client.client.controlled_object = new_controlled_character
@@ -247,8 +274,10 @@ function server_class:new_client(new_guid)
 	--})			
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
+	new_shotgun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
 	
 	new_gun.weapon.current_rounds = 15
+	new_shotgun.weapon.current_rounds = 15
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
