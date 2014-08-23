@@ -25,4 +25,8 @@ function components.replication:constructor(init)
 	self.sub_entity_groups = {
 		WIELDED_ENTITIES = {}
 	}
+	
+	if init.upload_rate then
+		set_rate(self, "upload", init.upload_rate)
+	end
 end

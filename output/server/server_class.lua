@@ -185,6 +185,8 @@ function server_class:new_client(new_guid)
 				}
 			},
 			
+			upload_rate = 4,
+			
 			public_group_name = "DROPPED_PUBLIC"
 		},
 		
@@ -210,6 +212,8 @@ function server_class:new_client(new_guid)
 					archetype_name = "shotgun"
 				}
 			},
+			
+			upload_rate = 1,
 			
 			public_group_name = "DROPPED_PUBLIC"
 		},
@@ -288,8 +292,8 @@ function server_class:new_client(new_guid)
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
 	new_shotgun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
 	
-	new_gun.weapon.current_rounds = 15
-	new_shotgun.weapon.current_rounds = 15
+	new_gun.weapon.current_rounds = 30
+	new_shotgun.weapon.current_rounds = 6
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	

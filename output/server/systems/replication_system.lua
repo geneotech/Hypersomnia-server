@@ -87,7 +87,7 @@ function replication_system:write_new_object(id, archetype_id, replica, output_b
 	output_bs:WriteBitstream(initial_state_bs)
 end
 					
-function replication_system:write_object_state(id, replica, dirty_flags, client_channel, output_bs)
+function replication_system:write_object_state(id, replica, dirty_flags, client_channel, do_transmission, output_bs)
 	local content_bs = BitStream()
 	
 	content_bs:name_property("object_id")
@@ -101,10 +101,15 @@ function replication_system:write_object_state(id, replica, dirty_flags, client_
 		local module_object = replica[module_name]
 		
 		if module_object ~= nil then
-			module_object:update_flags(dirty_flags[module_name], client_channel:next_unreliable_sequence(), client_channel:unreliable_ack())
+			module_object:ack_flags(dirty_flags[module_name], client_channel:unreliable_ack())
+			module_object:mark_out_of_date_fields(dirty_flags[module_name])
 			
-			if module_object:write_state(dirty_flags[module_name], content_bs) then	
-				modules_updated = modules_updated + 1 
+			if do_transmission then
+				replication_module.request_fields_transmission(dirty_flags[module_name], client_channel:next_unreliable_sequence())
+				
+				if module_object:write_state(dirty_flags[module_name], content_bs) then	
+					modules_updated = modules_updated + 1 
+				end
 			end
 		end
 	end
@@ -245,7 +250,13 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				end
 				
 				if post_recent_state then
-					if self:write_object_state(id, replica, states[subject_client].dirty_flags, client_channel, updated_objects) > 0 then
+					local should_transmit = false
+					
+					if sync.upload_rate == nil or sync:upload_ready() then
+						should_transmit = true
+					end
+				
+					if self:write_object_state(id, replica, states[subject_client].dirty_flags, client_channel, should_transmit, updated_objects) > 0 then
 						num_updated_objects = num_updated_objects + 1
 					end
 				end
