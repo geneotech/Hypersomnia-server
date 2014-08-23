@@ -106,10 +106,13 @@ function replication_system:write_object_state(id, replica, dirty_flags, client_
 			
 			if do_transmission then
 				replication_module.request_fields_transmission(dirty_flags[module_name], client_channel:next_unreliable_sequence())
-				
-				if module_object:write_state(dirty_flags[module_name], content_bs) then	
-					modules_updated = modules_updated + 1 
-				end
+			end
+			
+			-- always write pending changes unless acknowledged
+			-- for quicker upload rates, we'll need a flag if we really need to acknowledge this field for it
+			-- to be considered remotely up-to-date
+			if module_object:write_state(dirty_flags[module_name], content_bs) then	
+				modules_updated = modules_updated + 1 
 			end
 		end
 	end
@@ -221,9 +224,12 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				
 				local archetype_id = protocol.archetype_library[group_data.archetype_name]
 				
+				local is_new = false
+				
 				-- if the object doesn't exist on the remote peer
 				-- or the group mismatches
 				if states[subject_client] == nil or target_group ~= states[subject_client].group_name then
+					is_new = true
 					num_new_objects = num_new_objects + 1	
 					
 					self:write_new_object(id, archetype_id, replica, new_objects)
@@ -237,7 +243,7 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 					
 					for k, v in pairs(replica) do
 						-- hold dirty flags field-wise
-						states[subject_client].dirty_flags[k] = v:get_all_marked(client_channel:next_unreliable_sequence())
+						states[subject_client].dirty_flags[k] = v:get_all_marked()
 					end
 					
 					local client_ident = "unknown"
@@ -252,7 +258,7 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				if post_recent_state then
 					local should_transmit = false
 					
-					if sync.upload_rate == nil or sync:upload_ready() then
+					if is_new or sync.upload_rate == nil or sync:upload_ready() then
 						should_transmit = true
 					end
 				

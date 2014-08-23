@@ -185,7 +185,7 @@ function server_class:new_client(new_guid)
 				}
 			},
 			
-			upload_rate = 4,
+			upload_rate = 1,
 			
 			public_group_name = "DROPPED_PUBLIC"
 		},
@@ -213,7 +213,7 @@ function server_class:new_client(new_guid)
 				}
 			},
 			
-			upload_rate = 4,
+			upload_rate = 1,
 			
 			public_group_name = "DROPPED_PUBLIC"
 		},
