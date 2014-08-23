@@ -213,7 +213,7 @@ function server_class:new_client(new_guid)
 				}
 			},
 			
-			upload_rate = 1,
+			upload_rate = 4,
 			
 			public_group_name = "DROPPED_PUBLIC"
 		},

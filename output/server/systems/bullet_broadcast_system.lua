@@ -128,7 +128,7 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 					position = msgs[i].gun_transform.pos,
 					rotation = msgs[i].gun_transform.rotation,
 					starting_bullet_id = first_global_id,
-					random_seed = character.replication.id*10 + first_local_id
+					random_seed = subject.replication.id*10 + first_local_id
 				})
 			end
 			
