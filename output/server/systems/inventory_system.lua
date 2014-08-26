@@ -23,18 +23,64 @@ function inventory_system:handle_item_requests(world_object)
 	local msgs = self.owner_entity_system.messages["INVENTORY_REQUESTS"]
 	local replication = self.owner_entity_system.all_systems["replication"]
 	
+	for i=1, #self.targets do
+		local inventory = self.targets[i].inventory
+		
+		for j=1, #inventory.pending_requests do
+			local msg = inventory.pending_requests[j]
+			
+			self.owner_entity_system:post_table(msg.name, msg)
+		end
+		
+		inventory.pending_requests = {}
+	end
+	
 	for i=1, #msgs do
 		local msg = msgs[i]
 		local subject = msg.subject
 		local character = subject.client.controlled_object
 		local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
+		local inventory = subject_inventory.inventory
 		
 		local exclude_client;
 		if character.client_controller then
 			exclude_client = character.client_controller.owner_client
 		end
+			
+		local currently_wielded_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
+		local to_be_processed_later = currently_wielded_item and not currently_wielded_item.item.can_be_unwielded(currently_wielded_item)
 		
-		if msg.name == "PICK_ITEM_REQUEST" then
+		local function queue()
+			if to_be_processed_later then
+				inventory.pending_requests[#inventory.pending_requests+1] = msg
+			end
+			
+			return to_be_processed_later
+		end
+		
+		if msg.name == "SELECT_ITEM_REQUEST" then
+			local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
+			
+			if found_item and not queue() then
+				self:select_item(subject_inventory, character, found_item, nil, exclude_client)
+			end
+		elseif msg.name == "HOLSTER_ITEM" then
+			local found_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
+			
+			if found_item and not queue() then
+				self:holster_item(subject_inventory, character, found_item, nil, exclude_client)
+			end
+		elseif msg.name == "DROP_ITEM_REQUEST" and currently_wielded_item and currently_wielded_item.replication.id == msg.data.item_id and not queue() then
+			print "DROPPED IS WIELDED!"
+			
+			self.owner_entity_system:post_table("item_wielder_change", { 
+				unwield = true,
+				subject = character,
+				wielding_key = components.wield.keys.PRIMARY_WEAPON,
+					
+				["exclude_client"] = exclude_client 
+			})
+		elseif msg.name == "PICK_ITEM_REQUEST" then
 			if character ~= nil then
 				local wield = character.wield
 				if wield ~= nil then
@@ -57,43 +103,17 @@ function inventory_system:handle_item_requests(world_object)
 					end
 				end
 			end
-		elseif msg.name == "SELECT_ITEM_REQUEST" then
+		elseif msg.name == "DROP_ITEM_REQUEST" then
 			local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
 			
 			if found_item then
-				self:select_item(subject_inventory, character, found_item, nil, exclude_client)
-			end
-		elseif msg.name == "HOLSTER_ITEM" then
-			local found_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
-			
-			if found_item then
-				self:holster_item(subject_inventory, character, found_item, nil, exclude_client)
-			end
-		elseif msg.name == "DROP_ITEM_REQUEST" then
-			local currently_wielded_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
-			
-			if currently_wielded_item and currently_wielded_item.replication.id == msg.data.item_id then
-				print "DROPPED IS WIELDED!"
-				
 				self.owner_entity_system:post_table("item_wielder_change", { 
 					unwield = true,
-					subject = character,
-					wielding_key = components.wield.keys.PRIMARY_WEAPON,
-						
+					subject = subject_inventory,
+					wielding_key = found_item.replication.id,
+					
 					["exclude_client"] = exclude_client 
 				})
-			else
-				local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
-			
-				if found_item then
-					self.owner_entity_system:post_table("item_wielder_change", { 
-						unwield = true,
-						subject = subject_inventory,
-						wielding_key = found_item.replication.id,
-						
-						["exclude_client"] = exclude_client 
-					})
-				end
 			end
 		end
 	end
