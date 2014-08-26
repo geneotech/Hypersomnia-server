@@ -41,13 +41,15 @@ dofile "server\\systems\\replication_system.lua"
 dofile "server\\systems\\orientation_system.lua"
 dofile "server\\systems\\bullet_broadcast_system.lua"
 
+dofile "server\\chat.lua"
+
 server_class = inherits_from()
 
 function server_class:constructor()
 	self.server = network_interface()
 	
 	self.server:occasional_ping(true)
-	self.server:set_timeout_all(7000)
+	self.server:set_timeout_all(17000)
 	
 	self.received = network_packet()
 	self.user_map = guid_to_object_map()
@@ -350,17 +352,20 @@ function server_class:loop()
 		local message_type = packet:byte(0)
 		local guid = packet:guid()
 		
+		local is_reliable_transmission = message_type == protocol.RELIABLE_TRANSMISSION
+		
 		if message_type == network_event.ID_NEW_INCOMING_CONNECTION then
 			self:new_client(guid)
 		elseif message_type == network_event.ID_DISCONNECTION_NOTIFICATION then
 			self:remove_client(guid)
 		elseif message_type == network_event.ID_CONNECTION_LOST then
 			self:remove_client(guid)
-		elseif message_type == protocol.GAME_TRANSMISSION then
+		elseif message_type == protocol.GAME_TRANSMISSION or is_reliable_transmission then
 			local entity = self.user_map:at(guid) 
 			self.entity_system_instance:post_table("network_message", { 
 				subject = entity,
 				data = packet,
+				["is_reliable_transmission"] = is_reliable_transmission,
 				channel = entity.client.net_channel
 			})
 		end
@@ -398,6 +403,8 @@ function server_class:loop()
 	self.systems.weapon:update()
 	self.systems.bullet_broadcast:broadcast_bullets(self:update_time_remaining())
 	self.systems.bullet_broadcast:handle_hit_requests()
+	
+	broadcast_chat_messages(self.entity_system_instance)
 	
 	self.entity_system_instance:flush_messages()
 	
