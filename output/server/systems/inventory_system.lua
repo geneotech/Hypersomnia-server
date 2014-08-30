@@ -53,6 +53,7 @@ function inventory_system:handle_item_requests(world_object)
 		local function queue()
 			if to_be_processed_later then
 				inventory.pending_requests[#inventory.pending_requests+1] = msg
+				print "QUEUING!!"
 			end
 			
 			return to_be_processed_later

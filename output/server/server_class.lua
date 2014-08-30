@@ -138,14 +138,6 @@ function server_class:new_client(new_guid)
 	local public_character_modules = create_replica { "movement", "crosshair", "health" }
 	local owner_character_modules = create_replica { "movement", "health" }
 	
-	local owner_gun_modules = create_replica { "gun_init_info", "item" }
-	local public_owned_gun_modules = create_replica { "item" }
-	local public_dropped_gun_modules = create_replica { "item", "movement_rotated" }
-	
-	local owner_shotgun_modules = create_replica { "gun_init_info", "item" }
-	local public_owned_shotgun_modules = create_replica { "item" }
-	local public_dropped_shotgun_modules = create_replica { "item", "movement_rotated" }
-	
 	local inventory_modules = create_replica { "item" }
 	
 	--local client_modules = {}
@@ -167,63 +159,7 @@ function server_class:new_client(new_guid)
 		--	}
 		--}
 	}
-	
-	local new_gun = components.create_components {
-		replication = {
-			module_sets = {
-				DROPPED_PUBLIC = {
-					replica = public_dropped_gun_modules,
-					archetype_name = "m4a1"
-				},
-				
-				PUBLIC = {
-					replica = public_owned_gun_modules,
-					archetype_name = "m4a1"
-				},
-					
-				OWNER = {
-					replica = owner_gun_modules,
-					archetype_name = "m4a1"
-				}
-			},
-			
-			upload_rate = 1,
-			
-			public_group_name = "DROPPED_PUBLIC"
-		},
-		
-		weapon = self.current_map.weapons.m4a1.weapon_info,
-		item = self.current_map.weapons.m4a1.item_info
-	}
-	
-	local new_shotgun = components.create_components {
-		replication = {
-			module_sets = {
-				DROPPED_PUBLIC = {
-					replica = public_dropped_shotgun_modules,
-					archetype_name = "shotgun"
-				},
-				
-				PUBLIC = {
-					replica = public_owned_shotgun_modules,
-					archetype_name = "shotgun"
-				},
-					
-				OWNER = {
-					replica = owner_shotgun_modules,
-					archetype_name = "shotgun"
-				}
-			},
-			
-			upload_rate = 1,
-			
-			public_group_name = "DROPPED_PUBLIC"
-		},
-		
-		weapon = self.current_map.weapons.shotgun.weapon_info,
-		item = self.current_map.weapons.shotgun.item_info
-	}
-		
+
 	local new_controlled_character = components.create_components {
 		client_controller = {
 			owner_client = new_client
@@ -273,8 +209,8 @@ function server_class:new_client(new_guid)
 	
 	self.entity_system_instance:add_entity(new_client)
 	self.entity_system_instance:add_entity(new_controlled_character)
-	self.entity_system_instance:add_entity(new_gun)
-	self.entity_system_instance:add_entity(new_shotgun)
+	world_archetypes.spawn_gun(self, "m4a1", world_character.transform.current.pos)
+	world_archetypes.spawn_gun(self, "shotgun", world_character.transform.current.pos)
 	self.entity_system_instance:add_entity(new_character_inventory)
 	
 	new_client.client.controlled_object = new_controlled_character
@@ -290,12 +226,6 @@ function server_class:new_client(new_guid)
 	--	subject = new_controlled_character,
 	--	item = new_gun
 	--})			
-	
-	new_gun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
-	new_shotgun.cpp_entity.physics.body:SetTransform(to_meters(world_character.transform.current.pos), 0.1)
-	
-	new_gun.weapon.current_rounds = 30
-	new_shotgun.weapon.current_rounds = 6
 	
 	new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"
 	
