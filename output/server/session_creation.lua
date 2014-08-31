@@ -7,8 +7,8 @@ function server_class:create_incoming_sessions()
 	
 		local world_character = world_archetypes.create_player(self.current_map, self.current_map.teleport_shuffler:next_value().pos)
 		
-		local public_character_modules = create_replica { "movement", "crosshair", "health" }
-		local owner_character_modules = create_replica { "movement", "health" }
+		local public_character_modules = create_replica { "movement", "crosshair", "health", "label" }
+		local owner_character_modules = create_replica { "movement", "health", "label" }
 		
 		local inventory_modules = create_replica { "item" }
 		
@@ -41,6 +41,10 @@ function server_class:create_incoming_sessions()
 			
 			health = {
 				hp = 100
+			},
+			
+			label = {
+				label_str = msg.data.nickname
 			},
 			
 			orientation = {},
