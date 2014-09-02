@@ -18,5 +18,7 @@ function components.client:constructor(init)
 	self.net_channel = reliable_channel_wrapper:create()
 	
 	self.previous_targets_of_interest = {}
+	
+	self.nickname = init.nickname
 end
 

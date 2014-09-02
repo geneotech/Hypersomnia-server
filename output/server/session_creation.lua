@@ -14,7 +14,8 @@ function server_class:create_incoming_sessions()
 		
 		local new_client = components.create_components {
 			client = {
-				guid = new_guid
+				guid = new_guid,
+				nickname = msg.data.nickname
 			}
 		}
 	

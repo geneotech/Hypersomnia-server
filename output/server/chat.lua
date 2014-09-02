@@ -6,8 +6,8 @@ function broadcast_chat_messages(owner_entity_system)
 		local msg = msgs[i]
 		
 		for j=1, #client_sys.targets do
-			print "sending"
-			client_sys.network:send(protocol.make_reliable_bs(protocol.write_msg("CHAT_MESSAGE", {
+			client_sys.network:send(protocol.make_reliable_bs(protocol.write_msg("REMOTE_CHAT_MESSAGE", {
+					nickname = msg.subject.client.nickname,
 					message = msg.data.message
 				})), send_priority.IMMEDIATE_PRIORITY, send_reliability.RELIABLE_ORDERED, 0, client_sys.targets[j].client.guid, false)
 		end
