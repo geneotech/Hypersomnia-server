@@ -146,11 +146,10 @@ end
 function server_class:remove_client(guid)	
 	local client = self.user_map:at(guid)
 	
-	if client.client.controlled_object ~= nil then
+	if client.client and client.client.controlled_object ~= nil then
 		self.entity_system_instance:remove_entity(client.client.controlled_object)
+		self.entity_system_instance:remove_entity(client)
 	end
-	
-	self.entity_system_instance:remove_entity(client)
 	
 	self.user_map:remove(guid)
 	
