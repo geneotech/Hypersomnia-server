@@ -22,7 +22,8 @@ world_archetypes.create_player = function(owner_scene, position)
 				--max_speed = 3300,
 				
 				fixed_rotation = true,
-				density = 0.1
+				density = 0.1,
+				angled_damping = true
 			},
 		},
 		

@@ -65,7 +65,10 @@ function server_class:constructor()
 		"item_wielder_change",
 		
 		"pick_item",
-		"drop_item"
+		"drop_item",
+		
+		"begin_swinging",
+		"swing_hitcheck"
 	}
 	
 	self.entity_system_instance:register_messages (protocol.message_names)
