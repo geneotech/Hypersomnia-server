@@ -18,6 +18,17 @@ function bullet_broadcast_system:translate_shot_requests()
 			}})
 		end
 	end
+	
+	local msgs = self.owner_entity_system.messages["SWING_REQUEST"]
+	
+	for i=1, #msgs do
+		local character = msgs[i].subject.client.controlled_object
+		local wielded_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
+		
+		if wielded_item ~= nil and wielded_item.weapon ~= nil then
+			table.insert(wielded_item.weapon.buffered_actions, { trigger = components.weapon.triggers.MELEE, premade_shot = {}})
+		end
+	end
 end
 
 function bullet_broadcast_system:invalidate_old_bullets(subject)
@@ -86,6 +97,9 @@ end
 
 function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 	local msgs = self.owner_entity_system.messages["shot_message"]
+	local client_sys = self.owner_entity_system.all_systems["client"]
+	local all_clients = client_sys.targets
+	
 	if update_time_remaining < 0 then update_time_remaining = 0 end
 	
 	for i=1, #msgs do
@@ -117,9 +131,6 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 			self.next_bullet_global_id = self.next_bullet_global_id + 1
 		end
 		
-		local client_sys = self.owner_entity_system.all_systems["client"]
-		local all_clients = client_sys.targets
-		
 		for j=1, #all_clients do
 			if client_entity ~= all_clients[j] then
 				all_clients[j].client.net_channel:post_reliable("SHOT_INFO", {
@@ -132,6 +143,24 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 				})
 			end
 			
+		end
+	end
+	
+	local msgs = self.owner_entity_system.messages["begin_swinging"]
+	
+	for i=1, #msgs do
+		-- here, we should perform a proximity check for the processed bullet(s)
+		local subject = msgs[i].subject
+		local character = subject.item.wielder
+		local client_entity = character.client_controller.owner_client
+		local client = client_entity.client
+		
+		for j=1, #all_clients do
+			if client_entity ~= all_clients[j] then
+				all_clients[j].client.net_channel:post_reliable("SWING_INFO", {
+					subject_id = character.replication.id
+				})
+			end
 		end
 	end
 end
