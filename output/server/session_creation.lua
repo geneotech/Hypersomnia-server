@@ -73,7 +73,7 @@ function server_class:create_incoming_sessions()
 		self.entity_system_instance:add_entity(new_client)
 		self.entity_system_instance:add_entity(new_controlled_character)
 		world_archetypes.spawn_gun(self, "m4a1", world_character.transform.current.pos)
-		--world_archetypes.spawn_gun(self, "shotgun", world_character.transform.current.pos)
+		world_archetypes.spawn_gun(self, "shotgun", world_character.transform.current.pos)
 		world_archetypes.spawn_gun(self, "fireaxe", world_character.transform.current.pos)
 		self.entity_system_instance:add_entity(new_character_inventory)
 		

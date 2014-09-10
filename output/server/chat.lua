@@ -54,7 +54,7 @@ function broadcast_chat_messages(owner_entity_system)
 				}
 				
 				if client.client.controlled_object then
-					out_msg.optional_object_id = client.client.controlled_object.replication.id
+					out_msg.optional_object_id = msg.subject.client.controlled_object.replication.id
 				end
 			
 				client_sys.network:send(protocol.make_reliable_bs(protocol.write_msg("REMOTE_CHAT_MESSAGE", out_msg)), 
