@@ -43,6 +43,8 @@ dofile "server\\systems\\replication_system.lua"
 dofile "server\\systems\\orientation_system.lua"
 dofile "server\\systems\\bullet_broadcast_system.lua"
 
+dofile "server\\systems\\health_system.lua"
+
 dofile "server\\chat.lua"
 
 server_class = inherits_from()
@@ -66,6 +68,8 @@ function server_class:constructor()
 		
 		"pick_item",
 		"drop_item",
+		
+		"damage_message",
 		
 		"begin_swinging",
 		"swing_hitcheck"
@@ -99,7 +103,9 @@ function server_class:constructor()
 		item_wielder_change = function(msg) 
 			self.systems.wield:handle_wielder_change(msg)
 			self.systems.wield:broadcast_changes(msg)
-		end
+		end,
+		
+		damage_message = handle_damage_message
 	}
 	
 	

@@ -69,28 +69,38 @@ function bullet_broadcast_system:handle_hit_requests()
 				bullet_id = bullet.global_id
 			}), subject)
 					
-			if victim.health ~= nil then
-				if victim.health.hp - bullet.damage_amount < 0 then
-					bullet.damage_amount = victim.health.hp
-				end
-				
-				if bullet.damage_amount > 0 then
-					victim.health.hp = victim.health.hp - bullet.damage_amount
-					
-					victim.replication:broadcast_reliable(protocol.write_msg("DAMAGE_MESSAGE", {
-						victim_id = victim.replication.id,
-						amount = bullet.damage_amount
-					}))
-						
-					if victim.health.hp <= 0 then
-						victim.health.hp = 0
-						
-						victim.health.on_death(victim)	
-					end
-				end
-			end
+			self.owner_entity_system:post_table("damage_message", {
+				["victim"] = victim,
+				amount = bullet.damage_amount
+			})
 		
 			existing_bullets[local_bullet_id] = nil
+		end
+	end
+	
+	msgs = self.owner_entity_system.messages["MELEE_HIT_REQUEST"]
+	
+	for i=1, #msgs do
+		local msg = msgs[i]
+		local subject = msg.subject
+		local client = subject.client
+		
+		local character = client.controlled_object
+		local wielded_item = character.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
+	
+		local hit_object = objects[msg.data.suggested_subject]
+		
+		if wielded_item ~= nil and wielded_item.weapon ~= nil and wielded_item.weapon.state == components.weapon.states.SWINGING 
+		and wielded_item.weapon.hits_remaining > 0 and hit_object and hit_object.health and not wielded_item.weapon.entities_hit[hit_object]
+		
+		then	
+			wielded_item.weapon.entities_hit[hit_object] = true
+			wielded_item.weapon.hits_remaining = wielded_item.weapon.hits_remaining - 1
+			
+			self.owner_entity_system:post_table("damage_message", {
+				["victim"] = hit_object,
+				amount = wielded_item.weapon.swing_damage
+			})
 		end
 	end
 end
