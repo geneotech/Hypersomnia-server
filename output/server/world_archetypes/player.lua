@@ -28,8 +28,9 @@ world_archetypes.create_player = function(owner_scene, position)
 		},
 		
 		movement = {
-			input_acceleration = vec2(8000, 8000),
-			air_resistance = 0.05,
+			input_acceleration = vec2(10000, 10000),
+			max_accel_len = 10000,
+			air_resistance = 0.2,
 			braking_damping = 18
 		}
 	}
