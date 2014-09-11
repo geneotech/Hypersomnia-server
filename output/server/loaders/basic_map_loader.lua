@@ -19,7 +19,7 @@ return function(map_filename, scene_object)
 	end
 	
 	-- initialize environmental physical objects
-	local environmental_objects = get_all_objects { "wall_wood", "crate" }
+	local environmental_objects = get_all_objects { "static_snow" }
 	
 	for i = 1, #environmental_objects do
 		local object = environmental_objects[i]

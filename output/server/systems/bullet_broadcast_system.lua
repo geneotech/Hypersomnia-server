@@ -90,20 +90,20 @@ function bullet_broadcast_system:handle_hit_requests()
 	
 		local hit_object = objects[msg.data.suggested_subject]
 		
-		print "HITTING!"
-		print(wielded_item ~= nil)
-		print(wielded_item.weapon ~= nil)
-		print(wielded_item.weapon.state == components.weapon.states.SWINGING)
-		print(wielded_item.weapon.hits_remaining > 0)
-		print(hit_object)
-		print(hit_object.health)
-		print(not wielded_item.weapon.entities_hit[hit_object])
+		--print "HITTING!"
+		--print(wielded_item ~= nil)
+		--print(wielded_item.weapon ~= nil)
+		--print(wielded_item.weapon.state == components.weapon.states.SWINGING)
+		--print(wielded_item.weapon.hits_remaining > 0)
+		--print(hit_object)
+		--print(hit_object.health)
+		--print(not wielded_item.weapon.entities_hit[hit_object])
 		if wielded_item ~= nil and wielded_item.weapon ~= nil --and wielded_item.weapon.state == components.weapon.states.SWINGING 
 		--and wielded_item.weapon.hits_remaining > 0 and hit_object and hit_object.health and not wielded_item.weapon.entities_hit[hit_object]
 		
 		then	
-			wielded_item.weapon.entities_hit[hit_object] = true
-			wielded_item.weapon.hits_remaining = wielded_item.weapon.hits_remaining - 1
+			--wielded_item.weapon.entities_hit[hit_object] = true
+			--wielded_item.weapon.hits_remaining = wielded_item.weapon.hits_remaining - 1
 			
 			self.owner_entity_system:post_table("damage_message", {
 				["victim"] = hit_object,
