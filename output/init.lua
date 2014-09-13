@@ -23,7 +23,7 @@ dofile "server\\server_class.lua"
 --setup_debugger()
 
 server = server_class:create()
-server:start(37017, 30, 60)
+server:start(config_table.server_port, 30, 60)
 server:set_current_map(MAPS_DIRECTORY .. "sample_map.lua", "server\\loaders\\basic_map_loader.lua")
 
 SHOULD_QUIT_FLAG = false

@@ -10,11 +10,11 @@ config_table = {
 	doublebuffer = 1,
 	
 	sensitivity = vec2(2.5, 2.5),
-	
+	server_port = 27014,
 	
 	tickrate = 60,
 	
-	simulate_lag = 1,
+	simulate_lag = 0,
 	packet_loss = 0.00,
 	min_latency = 50,
 	jitter = 0
