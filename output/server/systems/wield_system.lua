@@ -28,7 +28,7 @@ function wield_system:broadcast_changes(msg)
 					})
 				end
 			end
-		elseif msg.wield then
+		elseif msg.wield and item.replication then
 			subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = item
 			
 			local wield = subject.wield

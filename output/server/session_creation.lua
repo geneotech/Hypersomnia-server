@@ -120,6 +120,8 @@ function server_class:create_incoming_sessions()
 		
 		self.user_map:add(new_guid, new_client)
 		
+		world_archetypes.spawn_soldier(self, self.current_map.teleport_shuffler:next_value().pos)
+		
 		print "New client connected."
 	end
 end
