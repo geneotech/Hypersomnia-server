@@ -48,11 +48,11 @@ obstacle_avoidance_archetype = {
 }
 
 wander_steering = create_steering {
-	weight = 0.4, 
+	weight = 2, 
 	behaviour_type = wander_behaviour,
 	
 	circle_radius = 200,
-	circle_distance = 2540,
+	circle_distance = 1540,
 	displacement_degrees = 15,
 	
 	force_color = rgba(0, 255, 255, 0)

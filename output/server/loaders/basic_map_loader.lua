@@ -69,7 +69,7 @@ return function(map_filename, scene_object)
 	visibility_system.draw_visible_walls = 1
 	
 	visibility_system.epsilon_ray_distance_variation = 0.007
-	visibility_system.epsilon_threshold_obstacle_hit = 10
+	visibility_system.epsilon_threshold_obstacle_hit = 20
 	visibility_system.epsilon_distance_vertex_hit = 5
 	
 	pathfinding_system.draw_memorised_walls = 1

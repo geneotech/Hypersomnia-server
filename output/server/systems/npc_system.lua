@@ -19,7 +19,9 @@ function npc_system:loop()
 	
 		local body = entity.physics.body
 		local myvel = body:GetLinearVelocity()
-		target_entities.forward.transform.current.pos = entity.transform.current.pos + vec2(myvel.x, myvel.y) * 50
+		
+		
+		--target_entities.forward.transform.current.pos = entity.transform.current.pos + vec2(myvel.x, myvel.y) * 50
 		
 		if entity.pathfinding and (entity.pathfinding:is_still_pathfinding() or entity.pathfinding:is_still_exploring()) then
 			target_entities.navigation.transform.current.pos = entity.pathfinding:get_current_navigation_target()
@@ -39,24 +41,19 @@ function npc_system:loop()
 			behaviours.target_seeking.enabled = false
 			behaviours.forward_seeking.enabled = false
 			
-			--behaviours.obstacle_avoidance.enabled = false
-			--behaviours.sensor_avoidance.enabled = false
 		end
 		
+			behaviours.obstacle_avoidance.enabled = false
+			behaviours.sensor_avoidance.enabled = false
 		behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
 		
 		--	behaviours.sensor_avoidance.enabled = true
 		--	player_behaviours.obstacle_avoidance.enabled = true
 		--player_behaviours.forward_seeking.enabled = true
 		
-		if behaviours.obstacle_avoidance.last_output_force:non_zero() then
-			body:ApplyForce(to_meters(behaviours.obstacle_avoidance.last_output_force:normalize() * 20), body:GetWorldCenter(), true)
-			print(behaviours.obstacle_avoidance.last_output_force.x, behaviours.obstacle_avoidance.last_output_force.y)
-			behaviours.wandering.enabled = false--current_wander_angle = behaviours.obstacle_avoidance.last_output_force:get_degrees()
-		else
-			body:ApplyForce(to_meters(behaviours.wandering.last_output_force*100), body:GetWorldCenter(), true)
-			behaviours.wandering.enabled = true
-		end
+		--body:ApplyForce(to_meters(behaviours.target_seeking.last_output_force:set_length(100)), body:GetWorldCenter(), true)
+		--body:ApplyForce(to_meters(behaviours.wandering.last_output_force*0), body:GetWorldCenter(), true)
+		--behaviours.wandering.enabled = false
 		
 	end
 end

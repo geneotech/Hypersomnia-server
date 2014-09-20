@@ -2,6 +2,11 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 	local public_soldier_modules = create_replica { "movement", "crosshair", "health" }
 		
 	local soldier_entity = owner_server.current_map.world_object:create_entity  {
+		render = {
+			layer = render_layers.PLAYERS,
+			model = owner_server.current_map.blank_sprite
+		},
+		
 		transform = {
 			pos = position
 		},
@@ -32,21 +37,33 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		},
 		
 		steering = {
-			apply_force = false,
-			max_speed = 1
+			apply_force = true,
+			max_speed = 12000
 		},
 		
 		visibility = {
 			visibility_layers = {
 				[visibility_component.DYNAMIC_PATHFINDING] = {
-					square_side = 2000,
+					square_side = 5000,
 					color = rgba(0, 255, 255, 120),
 					filter = filters.AVOIDANCE
 				}
 			}
+		},
+	
+		pathfinding = {
+		mark_touched_as_discovered = true,
+		force_persistent_navpoints = true,
+			enable_backtracking = true,
+			target_offset = 100,
+			rotate_navpoints = 10,
+			distance_navpoint_hit = 2,
+			favor_velocity_parallellness = true
 		}
 	}
 
+	soldier_entity.pathfinding:start_exploring()
+	
 	local new_soldier = components.create_components {
 		cpp_entity = soldier_entity,
 		
