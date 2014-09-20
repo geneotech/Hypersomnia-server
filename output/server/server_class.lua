@@ -8,6 +8,8 @@ dofile "server\\components\\replication.lua"
 dofile "server\\components\\client_controller.lua"
 dofile "server\\components\\orientation.lua"
 
+dofile "server\\components\\npc.lua"
+
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\weapons.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\modules.lua")
@@ -42,6 +44,8 @@ dofile "server\\systems\\client_system.lua"
 dofile "server\\systems\\replication_system.lua"
 dofile "server\\systems\\orientation_system.lua"
 dofile "server\\systems\\bullet_broadcast_system.lua"
+
+dofile "server\\systems\\npc_system.lua"
 
 dofile "server\\systems\\health_system.lua"
 
@@ -96,6 +100,7 @@ function server_class:constructor()
 	self.systems.wield = wield_system:create()
 	self.systems.item = item_system:create()
 	self.systems.inventory = inventory_system:create()
+	self.systems.npc = npc_system:create()
 	
 	self.entity_system_instance:register_systems(self.systems)
 	
@@ -232,6 +237,8 @@ function server_class:loop()
 	self.systems.weapon:update()
 	self.systems.bullet_broadcast:broadcast_bullets(self:update_time_remaining())
 	self.systems.bullet_broadcast:handle_hit_requests()
+	
+	self.systems.npc:loop()
 	
 	broadcast_chat_messages(self.entity_system_instance)
 	self:create_incoming_sessions()

@@ -29,6 +29,11 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 			max_accel_len = 10000,
 			air_resistance = 0.2,
 			braking_damping = 18
+		},
+		
+		steering = {
+			apply_force = true,
+			max_speed = 6000
 		}
 	}
 
@@ -50,7 +55,11 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		
 		orientation = {},
 		
-		wield = {}
+		wield = {},
+		
+		npc = {
+			owner_world = owner_server.current_map.world_object
+		}
 	}
 	
 	local new_character_inventory = components.create_components {		
@@ -63,6 +72,8 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 	
 	owner_server.entity_system_instance:add_entity(new_soldier)
 	owner_server.entity_system_instance:add_entity(new_character_inventory)
+	
+	components.npc.refresh_behaviours(new_soldier)
 		
 	owner_server.entity_system_instance:post_table("item_wielder_change", { 
 		wield = true,
