@@ -8,7 +8,7 @@ flee_steering = create_steering {
 seek_archetype = {
 	behaviour_type = seek_behaviour,
 	weight = 1,
-	force_color = rgba(0, 255, 255, 0)
+	force_color = rgba(0, 255, 255, 255)
 }			
 
 target_seek_steering = create_steering (override(seek_archetype, {
@@ -41,8 +41,8 @@ obstacle_avoidance_archetype = {
 	behaviour_type = obstacle_avoidance_behaviour,
 	visibility_type = visibility_component.DYNAMIC_PATHFINDING,
 	
-	force_color = rgba(0, 255, 0, 0),
-	intervention_time_ms = 200,
+	force_color = rgba(255, 255, 255, 255),
+	intervention_time_ms = 400,
 	avoidance_rectangle_width = 0,
 	ignore_discontinuities_narrower_than = 1
 }

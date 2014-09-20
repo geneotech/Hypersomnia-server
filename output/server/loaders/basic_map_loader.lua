@@ -34,8 +34,9 @@ return function(map_filename, scene_object)
 	world.input_system:add_context(main_input_context)
 	
 	-- initialize camera
-	scene_object.world_camera = create_world_camera_entity(world)
+	scene_object.world_camera = create_world_camera_entity(world, scene_object.sprite_library["blank"])
 	scene_object.world_camera.script.owner_scene = scene_object
+	scene_object.world_camera.script.max_zoom = 5000
 	
 	scene_object.main_input = world:create_entity {
 		input = {	
@@ -56,4 +57,37 @@ return function(map_filename, scene_object)
 	-- bind the atlas once
 	GL.glActiveTexture(GL.GL_TEXTURE0)
 	scene_object.all_atlas:bind()
+	
+	local visibility_system = world.visibility_system
+	local pathfinding_system = world.pathfinding_system
+	local render_system = world.render_system
+	
+	
+	visibility_system.draw_cast_rays = 0
+	visibility_system.draw_triangle_edges = 1
+	visibility_system.draw_discontinuities = 1
+	visibility_system.draw_visible_walls = 1
+	
+	visibility_system.epsilon_ray_distance_variation = 0.007
+	visibility_system.epsilon_threshold_obstacle_hit = 10
+	visibility_system.epsilon_distance_vertex_hit = 5
+	
+	pathfinding_system.draw_memorised_walls = 1
+	pathfinding_system.draw_undiscovered = 1
+	pathfinding_system.epsilon_max_segment_difference = 4
+	pathfinding_system.epsilon_distance_visible_point = 2
+	pathfinding_system.epsilon_distance_the_same_vertex = 10
+	
+	render_system.debug_drawing = 1
+	
+	render_system.draw_steering_forces = 1
+	render_system.draw_substeering_forces = 1
+	render_system.draw_velocities = 1
+	
+	render_system.draw_avoidance_info = 1
+	render_system.draw_wandering_info = 1
+	
+	render_system.visibility_expansion = 1.0
+	render_system.max_visibility_expansion_distance = 1
+	render_system.draw_visibility = 1
 end

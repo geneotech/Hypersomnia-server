@@ -32,8 +32,18 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		},
 		
 		steering = {
-			apply_force = true,
-			max_speed = 6000
+			apply_force = false,
+			max_speed = 1
+		},
+		
+		visibility = {
+			visibility_layers = {
+				[visibility_component.DYNAMIC_PATHFINDING] = {
+					square_side = 2000,
+					color = rgba(0, 255, 255, 120),
+					filter = filters.AVOIDANCE
+				}
+			}
 		}
 	}
 
