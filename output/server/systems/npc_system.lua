@@ -43,8 +43,9 @@ function npc_system:loop()
 			
 		end
 		
-			behaviours.obstacle_avoidance.enabled = false
-			behaviours.sensor_avoidance.enabled = false
+		--components.npc.escape_from(self.targets[i], vec2(0, 0))
+			--behaviours.obstacle_avoidance.enabled = false
+			--behaviours.sensor_avoidance.enabled = false
 		behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
 		
 		--	behaviours.sensor_avoidance.enabled = true

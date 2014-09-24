@@ -52,8 +52,8 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		},
 	
 		pathfinding = {
-		mark_touched_as_discovered = true,
-		force_persistent_navpoints = true,
+			mark_touched_as_discovered = true,
+			force_persistent_navpoints = true,
 			enable_backtracking = true,
 			target_offset = 100,
 			rotate_navpoints = 10,
@@ -62,7 +62,7 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		}
 	}
 
-	soldier_entity.pathfinding:start_exploring()
+	--soldier_entity.pathfinding:start_exploring()
 	
 	local new_soldier = components.create_components {
 		cpp_entity = soldier_entity,
@@ -102,13 +102,6 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 	
 	components.npc.refresh_behaviours(new_soldier)
 		
-	owner_server.entity_system_instance:post_table("item_wielder_change", { 
-		wield = true,
-		subject = new_soldier,
-		item = new_character_inventory,
-		wielding_key = components.wield.keys.INVENTORY
-	})
-	
 	new_soldier.wield.on_item_unwielded = function (subject, dropped_item)
 		if dropped_item.cpp_entity.physics == nil then return end
 		
@@ -133,6 +126,29 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 				
 		this.cpp_entity.physics.body:SetTransform(to_meters(owner_server.current_map.teleport_shuffler:next_value().pos), 0)
 	end
+		
+	owner_server.entity_system_instance:post_table("item_wielder_change", { 
+		wield = true,
+		subject = new_soldier,
+		item = new_character_inventory,
+		wielding_key = components.wield.keys.INVENTORY
+	})
+
+	local soldiers_gun = world_archetypes.spawn_gun(owner_server, "m4a1", vec2(0, 0))
+	
+	owner_server.entity_system_instance:post_table("pick_item", { 
+		subject = new_soldier,
+		item = soldiers_gun
+	})
+	
+	owner_server.entity_system_instance:post_table("SELECT_ITEM_REQUEST", { 
+		character = new_soldier,
+		
+		data = {
+			item_id = soldiers_gun.replication.id
+		}
+	})
+	
 	
 	return new_soldier
 end

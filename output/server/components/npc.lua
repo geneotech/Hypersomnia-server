@@ -42,7 +42,7 @@ obstacle_avoidance_archetype = {
 	visibility_type = visibility_component.DYNAMIC_PATHFINDING,
 	
 	force_color = rgba(255, 255, 255, 255),
-	intervention_time_ms = 400,
+	intervention_time_ms = 100,
 	avoidance_rectangle_width = 0,
 	ignore_discontinuities_narrower_than = 1
 }
@@ -111,6 +111,16 @@ function components.npc:constructor(init_table)
 	self.steering_behaviours.sensor_avoidance.target_from:set(self.target_entities.navigation)
 	
 	self.steering_behaviours.pursuit.enabled = false
+end
+
+function components.npc.escape_from(target, attacker_pos)
+	target.cpp_entity.pathfinding.enable_backtracking = false
+	target.cpp_entity.pathfinding.favor_velocity_parallellness = true
+	target.cpp_entity.pathfinding.custom_exploration_hint.enabled = true
+	target.cpp_entity.pathfinding.custom_exploration_hint.origin = attacker_pos
+	target.cpp_entity.pathfinding.custom_exploration_hint.target = target.cpp_entity.transform.current.pos
+	target.cpp_entity.pathfinding:start_exploring()
+		
 end
 
 function components.npc:pursue_target(target_entity)			

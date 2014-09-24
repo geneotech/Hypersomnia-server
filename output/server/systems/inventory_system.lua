@@ -38,7 +38,14 @@ function inventory_system:handle_item_requests(world_object)
 	for i=1, #msgs do
 		local msg = msgs[i]
 		local subject = msg.subject
-		local character = subject.client.controlled_object
+		local character;
+			
+		if subject then 
+			character = subject.client.controlled_object
+		else
+			character = msg.character
+		end
+		
 		local subject_inventory = character.wield.wielded_items[components.wield.keys.INVENTORY]
 		local inventory = subject_inventory.inventory
 		
@@ -61,8 +68,8 @@ function inventory_system:handle_item_requests(world_object)
 		
 		if msg.name == "SELECT_ITEM_REQUEST" then
 			local found_item = subject_inventory.wield.wielded_items[msg.data.item_id]
-			
 			if found_item and not queue() then
+				print "SELECTING!"
 				self:select_item(subject_inventory, character, found_item, nil, exclude_client)
 			end
 		elseif msg.name == "HOLSTER_ITEM" then
@@ -120,25 +127,19 @@ function inventory_system:handle_item_requests(world_object)
 	end
 end
 
-function inventory_system:translate_item_events()
-	local msgs = self.owner_entity_system.messages["pick_item"]
+function inventory_system:handle_picked_item(msg)
+	local subject = msg.subject
+	local item = msg.item
 	
-	for i=1, #msgs do
-		local msg = msgs[i]
-		local subject = msg.subject
-		local item = msg.item
-		
-		local inventory_subject = subject.wield.wielded_items[components.wield.keys.INVENTORY]
-		local inventory = inventory_subject.inventory
+	local inventory_subject = subject.wield.wielded_items[components.wield.keys.INVENTORY]
+	local inventory = inventory_subject.inventory
 	
-		self.owner_entity_system:post_table("item_wielder_change", {
-			subject = inventory_subject,
-			item = msg.item,
-			wield = true,
-			wielding_key = item.replication.id
-		})
-	end
-	
+	self.owner_entity_system:post_table("item_wielder_change", {
+		subject = inventory_subject,
+		item = msg.item,
+		wield = true,
+		wielding_key = item.replication.id
+	})	
 	--msgs = self.owner_entity_system.messages["drop_item"]
 	--
 	--for i=1, #msgs do

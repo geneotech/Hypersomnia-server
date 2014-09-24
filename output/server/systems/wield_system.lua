@@ -4,14 +4,13 @@ function wield_system:broadcast_changes(msg)
 		local replication = self.owner_entity_system.all_systems["replication"]
 		local subject = msg.subject
 		local item = msg.item
-		local subject_states = subject.replication.remote_states
 		local owner_client;
 		
 		if subject.client_controller then
 			owner_client = subject.client_controller.owner_client
 		end
 			
-		if msg.unwield then
+		if msg.unwield and subject.replication then
 			subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = nil
 			--item.replication:switch_public_group("DROPPED_PUBLIC")
 			
@@ -20,7 +19,7 @@ function wield_system:broadcast_changes(msg)
 			end
 			
 			-- if we UNSELECTED an item, only the clients seeing the subject are interested
-			for client_entity, v in pairs(subject_states) do
+			for client_entity, v in pairs(subject.replication.remote_states) do
 				if not msg.exclude_client or client_entity ~= msg.exclude_client then
 					client_entity.client.net_channel:post_reliable("ITEM_UNWIELDED", {
 						subject_id = subject.replication.id,
@@ -28,7 +27,8 @@ function wield_system:broadcast_changes(msg)
 					})
 				end
 			end
-		elseif msg.wield and item.replication then
+		elseif msg.wield and item.replication and subject.replication then
+			local subject_states = subject.replication.remote_states
 			subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = item
 			
 			local wield = subject.wield

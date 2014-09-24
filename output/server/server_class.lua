@@ -110,6 +110,10 @@ function server_class:constructor()
 			self.systems.wield:broadcast_changes(msg)
 		end,
 		
+		pick_item = function(msg)
+			self.systems.inventory:handle_picked_item(msg)
+		end,
+		
 		damage_message = handle_damage_message
 	}
 	
@@ -215,9 +219,9 @@ function server_class:loop()
 	cpp_world:render()
 	
 	self.systems.protocol:handle_incoming_commands()
+	self:create_incoming_sessions()
 	
 	self.systems.inventory:handle_item_requests(cpp_world)
-	self.systems.inventory:translate_item_events()
 
 	if #self.systems.client.targets > 0 and self:update_ready() then
 		self.systems.client:update_replicas_and_states()
@@ -241,7 +245,6 @@ function server_class:loop()
 	self.systems.npc:loop()
 	
 	broadcast_chat_messages(self.entity_system_instance)
-	self:create_incoming_sessions()
 	
 	self.entity_system_instance:flush_messages()
 	
