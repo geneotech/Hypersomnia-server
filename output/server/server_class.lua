@@ -181,6 +181,8 @@ function server_class:set_current_map(map_filename, loader_filename)
 	self.systems.item.world_object = self.current_map.world_object
 	self.systems.npc.world_object = self.current_map.world_object
 	
+	setlsys(self.current_map.world_object.render_system)
+	
 	create_weapons(self.current_map, true)
 	
 	table.insert(self.current_map.world_object.prestep_callbacks, function()

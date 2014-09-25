@@ -1,9 +1,9 @@
-
 npc_system = inherits_from (processing_system)
 
---function npc_system:constructor()
---	processing_system.constructor(self)
---end
+function npc_system:add_entity(new_entity)
+	new_entity.npc.owner_entity = new_entity
+	processing_system.add_entity(self, new_entity)
+end
 
 function npc_system:get_required_components()
 	return { "npc" }
@@ -11,9 +11,10 @@ end
 
 function npc_system:loop()
 	for i=1, #self.targets do	
-		local npc = self.targets[i].npc
+		local target = self.targets[i]
+		local npc = target.npc
 		
-		local entity = self.targets[i].cpp_entity
+		local entity = target.cpp_entity
 		local behaviours = npc.steering_behaviours
 		local target_entities = npc.target_entities
 	
@@ -45,8 +46,7 @@ function npc_system:loop()
 			
 		end
 		
-		--components.npc.escape_from(self.targets[i], vec2(0, 0))
-			--behaviours.obstacle_avoidance.enabled = false
+			behaviours.obstacle_avoidance.enabled = false
 			--behaviours.sensor_avoidance.enabled = false
 		behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
 		
@@ -54,14 +54,35 @@ function npc_system:loop()
 		--	player_behaviours.obstacle_avoidance.enabled = true
 		--player_behaviours.forward_seeking.enabled = true
 		
-		body:SetLinearVelocity(to_meters(vec2(0, 0)))
-		
 		local pos = entity.transform.current.pos
 		local radius = entity.visibility:get_layer(visibility_component.DYNAMIC_PATHFINDING).square_side
-		local targets_in_proximity = self.world_object.physics_system:query_aabb(pos - radius/2*math.sqrt(2), pos + radius/2*math.sqrt(2), create_query_filter({"CHARACTER", "DROPPED_ITEM"}), entity)
+		local half_diag = radius/2
+		local physics = self.world_object.physics_system
+		local targets_in_proximity = physics:query_aabb(pos - vec2(half_diag, half_diag), pos + vec2(half_diag, half_diag), create_query_filter({"CHARACTER", "DROPPED_ITEM"}), entity)
 		
+		--clearlc(2)
+		--debuglc(2, rgba(0, 255, 255, 255),pos - vec2(half_diag, half_diag), pos + vec2(half_diag, half_diag) )
 		
+		npc.seen_enemies = {}
+		npc.seen_items = {}
 		
+		for candidate in targets_in_proximity.bodies do
+			local script = body_to_entity(candidate).script
+			
+			-- if it's visible
+			
+			if script and ((target.pos - script.pos):length() < 2 or not physics:ray_cast(target.pos, script.pos, create_query_filter({"STATIC_OBJECT"}), target.cpp_entity).hit) then
+				if script.client_controller then
+					print "adding!"
+					npc.seen_enemies[#npc.seen_enemies + 1] = script
+				elseif script.item then
+					npc.seen_items[#npc.seen_items + 1] = script
+				end	
+			end
+		end
+		
+		npc:closest_visible_enemy(table.best(npc.seen_enemies, function(a, b) return (a.pos - target.pos):length_sq() < (b.pos - target.pos):length_sq() end))
+		npc:update_escape()
 		--body:ApplyForce(to_meters(behaviours.target_seeking.last_output_force:set_length(100)), body:GetWorldCenter(), true)
 		--body:ApplyForce(to_meters(behaviours.wandering.last_output_force*0), body:GetWorldCenter(), true)
 		--behaviours.wandering.enabled = false
