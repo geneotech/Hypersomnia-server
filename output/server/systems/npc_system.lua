@@ -55,6 +55,13 @@ function npc_system:loop()
 		--player_behaviours.forward_seeking.enabled = true
 		
 		body:SetLinearVelocity(to_meters(vec2(0, 0)))
+		
+		local pos = entity.transform.current.pos
+		local radius = entity.visibility:get_layer(visibility_component.DYNAMIC_PATHFINDING).square_side
+		local targets_in_proximity = self.world_object.physics_system:query_aabb(pos - radius/2*math.sqrt(2), pos + radius/2*math.sqrt(2), create_query_filter({"CHARACTER", "DROPPED_ITEM"}), entity)
+		
+		
+		
 		--body:ApplyForce(to_meters(behaviours.target_seeking.last_output_force:set_length(100)), body:GetWorldCenter(), true)
 		--body:ApplyForce(to_meters(behaviours.wandering.last_output_force*0), body:GetWorldCenter(), true)
 		--behaviours.wandering.enabled = false

@@ -5,7 +5,8 @@ function inventory_system:get_required_components()
 end
 
 function inventory_system:get_item_in_range(physics_system, what_entity, try_to_pick_weapon)
-	local items_in_range = physics_system:query_body(what_entity, filters.ITEM_PICK, nil)
+	local filter = create_query_filter({ "DROPPED_ITEM" })
+	local items_in_range = physics_system:query_body(what_entity, filter, nil)
 	
 	local found_item;
 	

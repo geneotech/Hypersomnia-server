@@ -179,6 +179,7 @@ function server_class:set_current_map(map_filename, loader_filename)
 	
 	self.systems.weapon.physics = self.current_map.world_object.physics_system
 	self.systems.item.world_object = self.current_map.world_object
+	self.systems.npc.world_object = self.current_map.world_object
 	
 	create_weapons(self.current_map, true)
 	
