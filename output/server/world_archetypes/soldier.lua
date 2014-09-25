@@ -141,12 +141,9 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		item = soldiers_gun
 	})
 	
-	owner_server.entity_system_instance:post_table("SELECT_ITEM_REQUEST", { 
-		character = new_soldier,
-		
-		data = {
-			item_id = soldiers_gun.replication.id
-		}
+	owner_server.entity_system_instance:post_table("select_item", { 
+		subject = new_soldier,
+		item_id = soldiers_gun.replication.id
 	})
 	
 	

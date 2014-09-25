@@ -33,6 +33,7 @@ world_archetypes.spawn_gun = function(owner_server, gun_name, pos)
 
 	new_gun.weapon.current_rounds = owner_server.current_map.weapons[gun_name].weapon_info.current_rounds
 	
+	new_gun.weapon:create_smoke_group(owner_server.current_map.world_object.world)
 	owner_server.entity_system_instance:add_entity(new_gun)
 	
 	new_gun.cpp_entity.physics.body:SetTransform(to_meters(pos), 0.0)

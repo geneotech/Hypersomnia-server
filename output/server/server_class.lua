@@ -72,6 +72,8 @@ function server_class:constructor()
 		
 		"pick_item",
 		"drop_item",
+		"holster_item",
+		"select_item",
 		
 		"damage_message",
 		
@@ -81,11 +83,17 @@ function server_class:constructor()
 	
 	self.entity_system_instance:register_messages (protocol.message_names)
 	
-	self.entity_system_instance:register_message_group ("INVENTORY_REQUESTS", {
+	self.entity_system_instance:register_message_group ("CHARACTER_ACTIONS", {
 		"PICK_ITEM_REQUEST",
 		"SELECT_ITEM_REQUEST",
 		"HOLSTER_ITEM",
-		"DROP_ITEM_REQUEST"
+		"DROP_ITEM_REQUEST",
+		
+		"SHOT_REQUEST",
+		"HIT_REQUEST",
+		
+		"SWING_REQUEST",
+		"MELEE_HIT_REQUEST"
 	})
 	
 	-- create all necessary systems
@@ -111,12 +119,39 @@ function server_class:constructor()
 		end,
 		
 		pick_item = function(msg)
-			self.systems.inventory:handle_picked_item(msg)
+			self.systems.inventory:handle_pick_item(msg)
+		end,
+		
+		drop_item = function(msg)
+			self.systems.inventory:handle_drop_item(msg)
+		end,
+		
+		holster_item = function(msg)
+			self.systems.inventory:handle_holster_item(msg)
+		end,
+		
+		select_item = function(msg)
+			self.systems.inventory:handle_select_item(msg)
 		end,
 		
 		damage_message = handle_damage_message
 	}
 	
+	local function inventory_request(msg) 
+		self.systems.inventory:handle_request(msg, self.current_map.world_object)
+	end
+	
+	self.systems.client_controller.action_callbacks = {
+		SHOT_REQUEST = function(msg) self.systems.bullet_broadcast:handle_shot_request(msg) end,
+		HIT_REQUEST = function(msg) self.systems.bullet_broadcast:handle_hit_request(msg) end,
+		SWING_REQUEST = function(msg) self.systems.bullet_broadcast:handle_swing_request(msg) end,
+		MELEE_HIT_REQUEST = function(msg) self.systems.bullet_broadcast:handle_melee_hit_request(msg) end,
+		
+		PICK_ITEM_REQUEST = inventory_request,
+		SELECT_ITEM_REQUEST = inventory_request,
+		HOLSTER_ITEM = inventory_request,
+		DROP_ITEM_REQUEST = inventory_request
+	}
 	
 	self.global_timer = timer()
 	
@@ -145,7 +180,7 @@ function server_class:set_current_map(map_filename, loader_filename)
 	self.systems.weapon.physics = self.current_map.world_object.physics_system
 	self.systems.item.world_object = self.current_map.world_object
 	
-	create_weapons(self.current_map, false)
+	create_weapons(self.current_map, true)
 	
 	table.insert(self.current_map.world_object.prestep_callbacks, function()
 		self.systems.client:substep()
@@ -219,9 +254,10 @@ function server_class:loop()
 	cpp_world:render()
 	
 	self.systems.protocol:handle_incoming_commands()
-	self:create_incoming_sessions()
+	self.systems.client_controller:populate_action_channels()
+	self.systems.client_controller:invoke_action_callbacks()
 	
-	self.systems.inventory:handle_item_requests(cpp_world)
+	self:create_incoming_sessions()
 
 	if #self.systems.client.targets > 0 and self:update_ready() then
 		self.systems.client:update_replicas_and_states()
@@ -237,10 +273,8 @@ function server_class:loop()
 	
 	self.systems.orientation:update()
 	
-	self.systems.bullet_broadcast:translate_shot_requests()
 	self.systems.weapon:update()
 	self.systems.bullet_broadcast:broadcast_bullets(self:update_time_remaining())
-	self.systems.bullet_broadcast:handle_hit_requests()
 	
 	self.systems.npc:loop()
 	
