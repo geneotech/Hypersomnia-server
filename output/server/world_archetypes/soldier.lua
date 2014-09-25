@@ -15,7 +15,7 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 			body_type = Box2D.b2_dynamicBody,
 			
 			body_info = {
-				filter = filters.REMOTE_CHARACTER,
+				filter = filters.CHARACTER,
 				shape_type = physics_info.RECT,
 				rect_size = vec2(37, 37),
 				

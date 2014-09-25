@@ -21,6 +21,8 @@ function npc_system:loop()
 		local myvel = body:GetLinearVelocity()
 		
 		
+		-- general steering towards a predefined target
+		
 		--target_entities.forward.transform.current.pos = entity.transform.current.pos + vec2(myvel.x, myvel.y) * 50
 		
 		if entity.pathfinding and (entity.pathfinding:is_still_pathfinding() or entity.pathfinding:is_still_exploring()) then
@@ -52,6 +54,7 @@ function npc_system:loop()
 		--	player_behaviours.obstacle_avoidance.enabled = true
 		--player_behaviours.forward_seeking.enabled = true
 		
+		body:SetLinearVelocity(to_meters(vec2(0, 0)))
 		--body:ApplyForce(to_meters(behaviours.target_seeking.last_output_force:set_length(100)), body:GetWorldCenter(), true)
 		--body:ApplyForce(to_meters(behaviours.wandering.last_output_force*0), body:GetWorldCenter(), true)
 		--behaviours.wandering.enabled = false

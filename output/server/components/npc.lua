@@ -101,6 +101,11 @@ function components.npc:constructor(init_table)
 		last_seen = init_table.owner_world:create_entity({ transform = {} })
 	}
 	
+	-- will change on retargetting
+	self.current_target = nil
+	
+	-- we always have only one fighting target
+	-- we pick the closest one to us
 	self.was_seen = false
 	self.is_seen = false
 	self.is_alert = false
