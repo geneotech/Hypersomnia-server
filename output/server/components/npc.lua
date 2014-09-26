@@ -117,35 +117,47 @@ function components.npc:constructor(init_table)
 end
 
 function components.npc:start_patrol()
-	self.owner_entity.cpp_entity.pathfinding.enable_backtracking = true
-	self.owner_entity.cpp_entity.pathfinding.favor_velocity_parallellness = true
-	self.owner_entity.cpp_entity.pathfinding.custom_exploration_hint.enabled = false
-	self.owner_entity.cpp_entity.pathfinding:start_exploring()
+	self.entity.pathfinding.enable_backtracking = true
+	self.entity.pathfinding.favor_velocity_parallellness = true
+	self.entity.pathfinding.custom_exploration_hint.enabled = false
+	self.entity.pathfinding:start_exploring()
 end
 
 function components.npc:update_escape()
-	if self.attacker_pos then
-		self.owner_entity.cpp_entity.pathfinding.custom_exploration_hint.origin = self.owner_entity.pos
-		self.owner_entity.cpp_entity.pathfinding.custom_exploration_hint.target = self.owner_entity.pos + (self.owner_entity.pos - self.attacker_pos)
+	if self.last_seen then
+		self.entity.pathfinding.custom_exploration_hint.origin = self.owner.pos
+		self.entity.pathfinding.custom_exploration_hint.target = self.owner.pos + (self.owner.pos - self.last_seen)
 	end
 end
 
 function components.npc:escape_from(attacker_pos)
 	self.attacker_pos = attacker_pos
-	self.owner_entity.cpp_entity.pathfinding.enable_backtracking = true
-	self.owner_entity.cpp_entity.pathfinding.favor_velocity_parallellness = true
-	self.owner_entity.cpp_entity.pathfinding.custom_exploration_hint.enabled = true
-	self.owner_entity.cpp_entity.pathfinding:start_exploring()
+	self.entity.pathfinding.enable_backtracking = true
+	self.entity.pathfinding.favor_velocity_parallellness = true
+	self.entity.pathfinding.custom_exploration_hint.enabled = true
+	self.entity.pathfinding:start_exploring()
 end
 
-function components.npc:pursue_target(target_entity)			
+function components.npc:stop_escape()
+	self.entity.pathfinding.custom_exploration_hint.enabled = false
+	self.entity.pathfinding:clear_pathfinding_info()
+end
+
+function components.npc:pursue_target(target_entity)
+	self.pursued_target = target_entity
 	self.steering_behaviours.pursuit.target_from:set(target_entity)
 	self.steering_behaviours.pursuit.enabled = true
 	self.steering_behaviours.obstacle_avoidance.enabled = false
 	self.steering_behaviours.sensor_avoidance.target_from:set(target_entity)
 end
 
-function components.npc:stop_pursuit()	
+
+function components.npc:update_pursuit()
+
+end
+
+function components.npc:stop_pursuit()
+	self.pursued_target = nil
 	self.steering_behaviours.pursuit.enabled = false
 	self.steering_behaviours.obstacle_avoidance.enabled = true
 	self.steering_behaviours.sensor_avoidance.target_from:set(self.target_entities.navigation)
@@ -162,6 +174,8 @@ function components.npc:closest_visible_enemy(new_target)
 		self.is_seen = true
 		self.is_alert = true
 		
+		self.last_seen = vec2(new_target.pos)
+		
 		if self.closest_enemy ~= new_target then
 			self.closest_enemy = new_target
 		end
@@ -171,7 +185,7 @@ function components.npc:closest_visible_enemy(new_target)
 end
 
 function components.npc:refresh_behaviours()
-	local this = self.owner_entity
+	local this = self.owner
 	local entity = this.cpp_entity
 	
 	entity.steering:clear_behaviours()

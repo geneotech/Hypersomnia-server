@@ -1,7 +1,8 @@
 npc_system = inherits_from (processing_system)
 
 function npc_system:add_entity(new_entity)
-	new_entity.npc.owner_entity = new_entity
+	new_entity.npc.owner = new_entity
+	new_entity.npc.entity = new_entity.cpp_entity
 	processing_system.add_entity(self, new_entity)
 end
 
