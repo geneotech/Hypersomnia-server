@@ -1,5 +1,7 @@
+dofile "server\\world_archetypes\\soldier_tree.lua"
+
 world_archetypes.spawn_soldier = function(owner_server, pos)
-	local public_soldier_modules = create_replica { "movement", "crosshair", "health" }
+	local public_soldier_modules = create_replica { "movement", "orientation", "health" }
 		
 	local soldier_entity = owner_server.current_map.world_object:create_entity  {
 		render = {
@@ -28,7 +30,13 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 				angled_damping = true
 			},
 		},
-		
+	
+		lookat = {
+			easing_mode = lookat_component.EXPONENTIAL,
+			smoothing_average_factor = 0.5,
+			averages_per_sec = 80
+		},
+			
 		movement = {
 			input_acceleration = vec2(10000, 10000),
 			max_accel_len = 10000,
@@ -38,7 +46,8 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		
 		steering = {
 			apply_force = true,
-			max_speed = 12000
+			max_speed = 24000,
+			max_resultant_force = 24000
 		},
 		
 		visibility = {
@@ -59,6 +68,13 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 			rotate_navpoints = 10,
 			distance_navpoint_hit = 2,
 			favor_velocity_parallellness = true
+		},
+		
+		behaviour_tree = {
+			trees = {
+				npc_legs_behaviour_tree.legs
+				--npc_hands_behaviour_tree.hands
+			}
 		}
 	}
 
@@ -73,7 +89,9 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 					replica = public_soldier_modules,
 					archetype_name = "SOLDIER"
 				}
-			}
+			},
+			
+			upload_rate = 60
 		},
 		
 		health = {
@@ -135,17 +153,17 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		wielding_key = components.wield.keys.INVENTORY
 	})
 
-	local soldiers_gun = world_archetypes.spawn_gun(owner_server, "m4a1", vec2(0, 0))
-	
-	owner_server.entity_system_instance:post_table("pick_item", { 
-		subject = new_soldier,
-		item = soldiers_gun
-	})
-	
-	owner_server.entity_system_instance:post_table("select_item", { 
-		subject = new_soldier,
-		item_id = soldiers_gun.replication.id
-	})
+	--local soldiers_gun = world_archetypes.spawn_gun(owner_server, "m4a1", vec2(0, 0))
+	--
+	--owner_server.entity_system_instance:post_table("pick_item", { 
+	--	subject = new_soldier,
+	--	item = soldiers_gun
+	--})
+	--
+	--owner_server.entity_system_instance:post_table("select_item", { 
+	--	subject = new_soldier,
+	--	item_id = soldiers_gun.replication.id
+	--})
 	
 	
 	return new_soldier

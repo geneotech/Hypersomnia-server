@@ -72,9 +72,9 @@ function server_class:create_incoming_sessions()
 		
 		self.entity_system_instance:add_entity(new_client)
 		self.entity_system_instance:add_entity(new_controlled_character)
-		world_archetypes.spawn_gun(self, "m4a1", world_character.transform.current.pos)
-		world_archetypes.spawn_gun(self, "shotgun", world_character.transform.current.pos)
-		world_archetypes.spawn_gun(self, "fireaxe", world_character.transform.current.pos)
+		local weapon_1 = world_archetypes.spawn_gun(self, "m4a1", world_character.transform.current.pos)
+		local weapon_2 = world_archetypes.spawn_gun(self, "shotgun", world_character.transform.current.pos)
+		local weapon_3 = world_archetypes.spawn_gun(self, "fireaxe", world_character.transform.current.pos)
 		self.entity_system_instance:add_entity(new_character_inventory)
 		
 		new_client.client.controlled_object = new_controlled_character
@@ -88,7 +88,17 @@ function server_class:create_incoming_sessions()
 		
 		--self.entity_system_instance:post_table("pick_item", { 
 		--	subject = new_controlled_character,
-		--	item = new_gun
+		--	item = weapon_1
+		--})
+		--
+		--self.entity_system_instance:post_table("pick_item", { 
+		--	subject = new_controlled_character,
+		--	item = weapon_2
+		--})			
+        --
+		--self.entity_system_instance:post_table("pick_item", { 
+		--	subject = new_controlled_character,
+		--	item = weapon_3
 		--})			
 		
 		new_client.client.group_by_id[new_controlled_character.replication.id] = "OWNER"

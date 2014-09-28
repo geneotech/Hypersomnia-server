@@ -10,5 +10,3 @@ function orientation_system:update()
 		character.orientation.crosshair_position = msgs[i].data.position
 	end
 end
-
-

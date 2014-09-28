@@ -16,40 +16,15 @@ function npc_system:loop()
 		local npc = target.npc
 		
 		local entity = target.cpp_entity
-		local behaviours = npc.steering_behaviours
-		local target_entities = npc.target_entities
-	
-		local body = entity.physics.body
-		local myvel = body:GetLinearVelocity()
-		
 		
 		-- general steering towards a predefined target
 		
-		--target_entities.forward.transform.current.pos = entity.transform.current.pos + vec2(myvel.x, myvel.y) * 50
 		
-		if entity.pathfinding and (entity.pathfinding:is_still_pathfinding() or entity.pathfinding:is_still_exploring()) then
-			target_entities.navigation.transform.current.pos = entity.pathfinding:get_current_navigation_target()
-			
-			behaviours.sensor_avoidance.enabled = true
-			behaviours.obstacle_avoidance.enabled = true
-			if behaviours.sensor_avoidance.last_output_force:non_zero() then
-				behaviours.target_seeking.enabled = false
-				behaviours.forward_seeking.enabled = true
-				behaviours.obstacle_avoidance.enabled = true
-			else
-				behaviours.target_seeking.enabled = true
-				behaviours.forward_seeking.enabled = false
-				--behaviours.obstacle_avoidance.enabled = false
-			end
-		else
-			behaviours.target_seeking.enabled = false
-			behaviours.forward_seeking.enabled = false
-			
-		end
+	
+		npc:update_pathfinding()
 		
-			behaviours.obstacle_avoidance.enabled = false
+			--behaviours.obstacle_avoidance.enabled = false
 			--behaviours.sensor_avoidance.enabled = false
-		behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
 		
 		--	behaviours.sensor_avoidance.enabled = true
 		--	player_behaviours.obstacle_avoidance.enabled = true
@@ -74,7 +49,6 @@ function npc_system:loop()
 			
 			if script and ((target.pos - script.pos):length() < 2 or not physics:ray_cast(target.pos, script.pos, create_query_filter({"STATIC_OBJECT"}), target.cpp_entity).hit) then
 				if script.client_controller then
-					print "adding!"
 					npc.seen_enemies[#npc.seen_enemies + 1] = script
 				elseif script.item then
 					npc.seen_items[#npc.seen_items + 1] = script
@@ -82,8 +56,30 @@ function npc_system:loop()
 			end
 		end
 		
-		npc:closest_visible_enemy(table.best(npc.seen_enemies, function(a, b) return (a.pos - target.pos):length_sq() < (b.pos - target.pos):length_sq() end))
-		npc:update_escape()
+		local closest_enemy = table.best(npc.seen_enemies, closest_to(target_pos))
+		npc:closest_visible_enemy(closest_enemy)
+		
+		npc:fade_alertness()
+		
+		if npc.is_seen then
+			entity.lookat.target:set(closest_enemy.cpp_entity)
+			entity.lookat.look_mode = lookat_component.POSITION
+		else	
+			entity.lookat.target:set(entity)
+			entity.lookat.look_mode = lookat_component.VELOCITY
+		end
+		
+		target.orientation.crosshair_position = vec2.from_degrees(entity.transform.current.rotation)
+		
+		local best_weapon = npc:find_best_weapon()
+		
+		if best_weapon then
+			npc:select_item(best_weapon)
+		end
+		-- control alertness
+		
+		
+		
 		--body:ApplyForce(to_meters(behaviours.target_seeking.last_output_force:set_length(100)), body:GetWorldCenter(), true)
 		--body:ApplyForce(to_meters(behaviours.wandering.last_output_force*0), body:GetWorldCenter(), true)
 		--behaviours.wandering.enabled = false

@@ -64,9 +64,9 @@ return function(map_filename, scene_object)
 	
 	
 	visibility_system.draw_cast_rays = 0
-	visibility_system.draw_triangle_edges = 1
-	visibility_system.draw_discontinuities = 1
-	visibility_system.draw_visible_walls = 1
+	visibility_system.draw_triangle_edges = 0
+	visibility_system.draw_discontinuities = 0
+	visibility_system.draw_visible_walls = 0
 	
 	visibility_system.epsilon_ray_distance_variation = 0.007
 	visibility_system.epsilon_threshold_obstacle_hit = 20
@@ -84,10 +84,10 @@ return function(map_filename, scene_object)
 	render_system.draw_substeering_forces = 1
 	render_system.draw_velocities = 1
 	
-	render_system.draw_avoidance_info = 1
-	render_system.draw_wandering_info = 1
+	render_system.draw_avoidance_info = 0
+	render_system.draw_wandering_info = 0
 	
 	render_system.visibility_expansion = 1.0
 	render_system.max_visibility_expansion_distance = 1
-	render_system.draw_visibility = 1
+	render_system.draw_visibility = 0
 end

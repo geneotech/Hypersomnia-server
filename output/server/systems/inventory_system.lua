@@ -4,14 +4,14 @@ function inventory_system:get_required_components()
 	return { "inventory" }
 end
 
-function inventory_system:get_item_in_range(physics_system, what_entity, try_to_pick_weapon)
+function inventory_system:get_item_in_range(what_entity, try_to_pick_weapon)
 	local filter = create_query_filter({ "DROPPED_ITEM" })
-	local items_in_range = physics_system:query_body(what_entity, filter, nil)
+	local items_in_range = self.world_object.physics_system:query_body(what_entity, filter, nil)
 	
 	local found_item;
 	
 	for candidate in items_in_range.bodies do
-		if try_to_pick_weapon == nil or (try_to_pick_weapon ~= nil and body_to_entity(candidate) == try_to_pick_weapon) then 
+		if try_to_pick_weapon == nil or (try_to_pick_weapon and body_to_entity(candidate) == try_to_pick_weapon) then 
 			found_item = body_to_entity(candidate).script
 			break
 		end
@@ -22,7 +22,7 @@ end
 
 -- netcode
 -- request translated into game events
-function inventory_system:handle_request(msg, world_object)
+function inventory_system:handle_request(msg)
 	local replication = self.owner_entity_system.all_systems["replication"]
 	
 	local subject = msg.subject
@@ -59,7 +59,7 @@ function inventory_system:handle_request(msg, world_object)
 			local wield = character.wield
 			if wield ~= nil then
 				-- subject validity ensured here
-				local found_item = self:get_item_in_range(world_object.physics_system, character.cpp_entity)
+				local found_item = self:get_item_in_range(character.cpp_entity)
 				
 				--
 				--if wield.wielded_item ~= nil then
