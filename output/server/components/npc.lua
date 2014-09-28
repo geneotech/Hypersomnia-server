@@ -142,7 +142,7 @@ function components.npc:reset_steering()
 --print(debug.traceback())
 end
 
-function components.npc:update_pathfinding()
+function components.npc:update_avoidance()
 	local entity = self.entity
 	local behaviours = self.steering_behaviours
 	local target_entities = self.target_entities
@@ -150,33 +150,41 @@ function components.npc:update_pathfinding()
 	local body = entity.physics.body
 	local myvel = body:GetLinearVelocity()
 		
-	if entity.pathfinding and (entity.pathfinding:is_still_pathfinding() or entity.pathfinding:is_still_exploring()) then
-		self.steering_behaviours.wandering.enabled = true
-		behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
-		
-		target_entities.navigation.transform.current.pos = entity.pathfinding:get_current_navigation_target()
-		
-		behaviours.sensor_avoidance.enabled = true
+	behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
+	
+	behaviours.sensor_avoidance.enabled = true
+	behaviours.obstacle_avoidance.enabled = true
+	
+	if behaviours.sensor_avoidance.last_output_force:non_zero() then
+		target_entities.forward.transform.current.pos = self.owner.pos + to_pixels(myvel)
+		behaviours.target_seeking.enabled = false
+		behaviours.forward_seeking.enabled = true
 		behaviours.obstacle_avoidance.enabled = true
+	else
+		behaviours.target_seeking.enabled = true
+		behaviours.forward_seeking.enabled = false
+		--behaviours.obstacle_avoidance.enabled = false
+	end
+end
+
+function components.npc:exit_avoidance()
+	self:reset_steering()
+end
+
+function components.npc:update_pathfinding()
+	local entity = self.entity
 		
-		if behaviours.sensor_avoidance.last_output_force:non_zero() then
-			target_entities.forward.transform.current.pos = self.owner.pos + to_pixels(myvel)
-			behaviours.target_seeking.enabled = false
-			behaviours.forward_seeking.enabled = true
-			behaviours.obstacle_avoidance.enabled = true
-		else
-			behaviours.target_seeking.enabled = true
-			behaviours.forward_seeking.enabled = false
-			--behaviours.obstacle_avoidance.enabled = false
-		end
+	if entity.pathfinding and (entity.pathfinding:is_still_pathfinding() or entity.pathfinding:is_still_exploring()) then
+		self.target_entities.navigation.transform.current.pos = entity.pathfinding:get_current_navigation_target()
+		self.steering_behaviours.wandering.enabled = true
+		self:update_avoidance()
 	end
 end
 
 function components.npc:exit_pathfinding()
 	self:reset_steering()
+	self:exit_avoidance()
 end
-
-
 
 function components.npc:start_patrol()
 	print "started patrol"
@@ -223,6 +231,7 @@ function components.npc:stop_escape()
 end
 
 function components.npc:pursue_target(target_entity)
+	self.target_entities.navigation.transform.current.pos = target_entity.pos
 	self.steering_behaviours.pursuit.target_from:set(target_entity.cpp_entity)
 	self.steering_behaviours.pursuit.enabled = true
 end

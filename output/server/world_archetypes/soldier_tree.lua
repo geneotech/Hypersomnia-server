@@ -63,6 +63,7 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 						task:interrupt_other_runner(behaviour_node.FAILURE)
 						-- out of range, will pick up later on
 						npc:pursue_target(item_of_interest)
+						npc:update_avoidance()
 						return behaviour_node.RUNNING
 					end
 				else
@@ -74,6 +75,7 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 			on_exit = function(entity, code)
 				print "exiting get_needed_items"
 				entity.script.npc:stop_pursuit()
+				entity.script.npc:exit_avoidance()
 			end
 		},
 		is_alert = clone_table(is_alert_archetype),
