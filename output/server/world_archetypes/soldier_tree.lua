@@ -100,7 +100,10 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 				if selected and selected.weapon and selected.weapon.current_rounds > 0 then
 					task:interrupt_other_runner(behaviour_node.FAILURE)
 					npc:stop_pursuit()
-					npc.steering_behaviours.wandering.weight_multiplier = 2.0
+					npc.steering_behaviours.strafing.enabled = true
+					npc.steering_behaviours.strafing.weight_multiplier = 1
+					npc.steering_behaviours.evasion.enabled = true
+					npc:update_avoidance("strafing", false)
 					return behaviour_node.RUNNING
 				end
 				return behaviour_node.FAILURE
@@ -108,7 +111,9 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 			
 			on_exit = function(entity, code)
 				print "exiting gun_strategy"
-				entity.script.npc.steering_behaviours.wandering.weight_multiplier = 1.0
+				local npc = entity.script.npc
+				npc:exit_avoidance()
+				npc:reset_steering()
 			end
 		},
 		
@@ -210,11 +215,33 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 				print "exiting walk_around"
 				entity.script.npc:exit_patrol()
 			end
+		},
+		
+		debug_avoidance = {
+			--default_return = behaviour_node.RUNNING,
+			--
+			--on_enter = function(entity, task)
+			--	task:interrupt_other_runner(behaviour_node.FAILURE)
+			--	local npc = entity.script.npc
+			--	npc:start_patrol()
+			--end,
+			on_update = function(entity)
+			
+				--entity.script.npc.steering_behaviours.wandering.enabled = true
+				entity.script.npc:update_avoidance("wandering", false)
+				return behaviour_node.RUNNING
+			end
+			
+			--on_exit = function(entity, status)
+			--	print "exiting walk_around"
+			--	entity.script.npc:exit_patrol()
+			--end
 		}
 	},
 	
 	connections = {
 		legs = {
+			--"debug_avoidance", 
 			"get_needed_items", "player_visible", "is_alert", "walk_around"
 		},
 

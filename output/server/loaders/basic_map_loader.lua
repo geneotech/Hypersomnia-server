@@ -84,8 +84,8 @@ return function(map_filename, scene_object)
 	render_system.draw_substeering_forces = 1
 	render_system.draw_velocities = 1
 	
-	render_system.draw_avoidance_info = 0
-	render_system.draw_wandering_info = 0
+	render_system.draw_avoidance_info = 1
+	render_system.draw_wandering_info = 1
 	
 	render_system.visibility_expansion = 1.0
 	render_system.max_visibility_expansion_distance = 1

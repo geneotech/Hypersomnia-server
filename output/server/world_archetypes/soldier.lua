@@ -119,8 +119,7 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 	owner_server.entity_system_instance:add_entity(new_character_inventory)
 	
 	new_soldier.npc:refresh_behaviours()
-	new_soldier.npc:start_patrol()
-		
+	
 	new_soldier.wield.on_item_unwielded = function (subject, dropped_item)
 		if dropped_item.cpp_entity.physics == nil then return end
 		

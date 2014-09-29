@@ -1,7 +1,7 @@
 flee_steering = create_steering {
 	behaviour_type = flee_behaviour,
-	weight = 10,
-	radius_of_effect = 300,
+	weight = 3,
+	radius_of_effect = 700,
 	force_color = rgba(255, 0, 0, 120)
 }
 		
@@ -21,7 +21,7 @@ forward_seek_steering = create_steering (override(seek_archetype, {
 
 containment_archetype = {
 	behaviour_type = containment_behaviour,
-	weight = 1, 
+	weight = 3, 
 	
 	ray_filter = filters.AVOIDANCE,
 	
@@ -30,19 +30,19 @@ containment_archetype = {
 	only_threats_in_OBB = false,
 	
 	force_color = rgba(0, 255, 255, 0),
-	intervention_time_ms = 240,
-	avoidance_rectangle_width = 0
+	intervention_time_ms = 200,
+	avoidance_rectangle_width = 10
 }
 
 containment_steering = create_steering (containment_archetype) 
 
 obstacle_avoidance_archetype = {
-	weight = 1.5, 
+	weight = 1, 
 	behaviour_type = obstacle_avoidance_behaviour,
 	visibility_type = visibility_component.DYNAMIC_PATHFINDING,
 	
-	force_color = rgba(0, 255, 0, 255),
-	intervention_time_ms = 100,
+	force_color = rgba(255, 255, 0, 255),
+	intervention_time_ms = 800,
 	avoidance_rectangle_width = 2,
 	ignore_discontinuities_narrower_than = 1
 }
@@ -54,6 +54,17 @@ wander_steering = create_steering {
 	circle_radius = 200,
 	circle_distance = 1540,
 	displacement_degrees = 15,
+	
+	force_color = rgba(0, 255, 255, 0)
+}
+
+strafing_steering = create_steering {
+	weight = 1, 
+	behaviour_type = wander_behaviour,
+	
+	circle_radius = 200,
+	circle_distance = 100,
+	displacement_degrees = 85,
 	
 	force_color = rgba(0, 255, 255, 0)
 }
@@ -91,8 +102,10 @@ function components.npc:constructor(init_table)
 		
 		sensor_avoidance = behaviour_state(sensor_avoidance_steering),
 		wandering = behaviour_state(wander_steering),
-		obstacle_avoidance = behaviour_state(obstacle_avoidance_steering),
+		obstacle_avoidance = behaviour_state(containment_steering),
 		pursuit = behaviour_state(pursuit_steering),
+		
+		strafing = behaviour_state(strafing_steering),
 		
 		evasion = behaviour_state(flee_steering)
 	}
@@ -128,6 +141,7 @@ function components.npc:reset_steering()
 	behaviours.evasion.enabled = false
 	
 	behaviours.wandering.enabled = false
+	behaviours.strafing.enabled = false
 	
 	behaviours.target_seeking.enabled = false
 	behaviours.forward_seeking.enabled = false
@@ -142,28 +156,35 @@ function components.npc:reset_steering()
 --print(debug.traceback())
 end
 
-function components.npc:update_avoidance()
+function components.npc:update_avoidance(navigating_behaviour, use_sensor)
+	if not navigating_behaviour then navigating_behaviour = "target_seeking" end
+	if use_sensor == nil then use_sensor = true end
+	
 	local entity = self.entity
 	local behaviours = self.steering_behaviours
 	local target_entities = self.target_entities
 	
 	local body = entity.physics.body
-	local myvel = body:GetLinearVelocity()
+	local myvel = to_pixels(body:GetLinearVelocity())
+	if myvel:length() <= 0 then myvel = vec2(10, 0) end
 		
-	behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
-	
-	behaviours.sensor_avoidance.enabled = true
+	behaviours.sensor_avoidance.enabled = use_sensor
 	behaviours.obstacle_avoidance.enabled = true
 	
-	if behaviours.sensor_avoidance.last_output_force:non_zero() then
+	if use_sensor then
+		behaviours.sensor_avoidance.max_intervention_length = (entity.transform.current.pos - target_entities.navigation.transform.current.pos):length() --- 70
 		target_entities.forward.transform.current.pos = self.owner.pos + to_pixels(myvel)
-		behaviours.target_seeking.enabled = false
-		behaviours.forward_seeking.enabled = true
-		behaviours.obstacle_avoidance.enabled = true
+		
+		if behaviours.sensor_avoidance.last_output_force:non_zero() then
+			behaviours[navigating_behaviour].enabled = false
+			behaviours.forward_seeking.enabled = true
+		else
+			behaviours[navigating_behaviour].enabled = true
+			behaviours.forward_seeking.enabled = false
+			--behaviours.obstacle_avoidance.enabled = false
+		end
 	else
-		behaviours.target_seeking.enabled = true
-		behaviours.forward_seeking.enabled = false
-		--behaviours.obstacle_avoidance.enabled = false
+		behaviours[navigating_behaviour].enabled = not behaviours.obstacle_avoidance.last_output_force:non_zero()
 	end
 end
 
@@ -205,7 +226,6 @@ end
 
 function components.npc:start_escape()
 	self.steering_behaviours.wandering.enabled = true
-	self.steering_behaviours.wandering.weight_multiplier = 2
 	self.entity.pathfinding.favor_velocity_parallellness = true
 	self.entity.pathfinding.custom_exploration_hint.enabled = true
 	self.entity.pathfinding:start_exploring()
@@ -299,10 +319,6 @@ end
 						
 function components.npc:closest_visible_enemy(new_target)
 	if new_target then
-		if not self.is_seen or self.closest_enemy ~= new_target then
-			self:start_escape()
-		end
-		
 		self.was_seen = true
 		self.is_seen = true
 		
