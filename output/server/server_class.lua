@@ -263,15 +263,6 @@ function server_class:loop()
 	
 	self:create_incoming_sessions()
 
-	if #self.systems.client.targets > 0 and self:update_ready() then
-		self.systems.client:update_replicas_and_states()
-		
-		self.entity_system_instance:handle_removed_entities()
-		
-		-- after all reliable messages (incl. DELETE_OBJECTS) were possibly posted, call network channels
-		self.systems.client:send_all_pending_data()		
-	end
-	
 	-- some systems may post reliable commands because of the incoming network messages
 	self.systems.client_controller:update()
 	
@@ -283,6 +274,22 @@ function server_class:loop()
 	self.systems.npc:loop()
 	
 	broadcast_chat_messages(self.entity_system_instance)
+	
+	local update_pass = #self.systems.client.targets > 0 and self:update_ready()
+	
+	if update_pass then
+		self.systems.client:update_replicas_and_states()
+		
+		self.entity_system_instance:handle_removed_entities()
+	end
+	
+	-- all reliables possibly posted
+	self.systems.client:add_loop_separators()
+	
+	if update_pass then
+		-- after all reliable messages (incl. DELETE_OBJECTS) were possibly posted, call network channels
+		self.systems.client:send_all_pending_data()		
+	end	
 	
 	self.entity_system_instance:flush_messages()
 	

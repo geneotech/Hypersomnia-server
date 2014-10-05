@@ -303,6 +303,12 @@ function components.npc:get_selected_item()
 	return self.owner.wield.wielded_items[components.wield.keys.PRIMARY_WEAPON]
 end
 
+function components.npc:holster_item()
+	self.owner.owner_entity_system:post_table("holster_item", { 
+		subject = self.owner
+	})
+end
+
 function components.npc:select_item(item)
 	self.owner.owner_entity_system:post_table("select_item", { 
 		subject = self.owner,

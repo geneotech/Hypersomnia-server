@@ -115,35 +115,43 @@ function bullet_broadcast_system:broadcast_bullets(update_time_remaining)
 		-- here, we should perform a proximity check for the processed bullet(s)
 		local subject = msgs[i].subject
 		local character = subject.item.wielder
-		local client_entity = character.client_controller.owner_client
-		local client = client_entity.client
-		
-		-- invalidate old bullets as we go
-		self:invalidate_old_bullets(client)
-		
-		-- save all new bullets for later invalidation
-		-- and hit request handling
 		
 		local first_global_id = self.next_bullet_global_id
-		local first_local_id = client.next_bullet_local_id
-		
-		for j=1, #msgs[i].bullets do
-			client.local_bullet_id_to_global[client.next_bullet_local_id] = {
-				global_id = self.next_bullet_global_id,
-				lifetime = timer(),
-				max_lifetime_ms = subject.weapon.max_lifetime_ms,
-				damage_amount = subject.weapon.bullet_damage
-			}
+		local first_local_id = self.next_bullet_global_id
+		local client_entity;
+		local delay = 0
 			
-			-- keep in sync with the client
-			client.next_bullet_local_id = client.next_bullet_local_id + 1
-			self.next_bullet_global_id = self.next_bullet_global_id + 1
+		if character.client_controller then
+			client_entity = character.client_controller.owner_client
+			local client = client_entity.client
+			delay = client_sys.network:get_last_ping(client.guid)/2
+			
+			-- invalidate old bullets as we go
+			self:invalidate_old_bullets(client)
+			
+			-- save all new bullets for later invalidation
+			-- and hit request handling
+			
+			first_local_id = client.next_bullet_local_id
+			
+			for j=1, #msgs[i].bullets do
+				client.local_bullet_id_to_global[client.next_bullet_local_id] = {
+					global_id = self.next_bullet_global_id,
+					lifetime = timer(),
+					max_lifetime_ms = subject.weapon.max_lifetime_ms,
+					damage_amount = subject.weapon.bullet_damage
+				}
+				
+				-- keep in sync with the client
+				client.next_bullet_local_id = client.next_bullet_local_id + 1
+				self.next_bullet_global_id = self.next_bullet_global_id + 1
+			end
 		end
 		
 		for j=1, #all_clients do
 			if client_entity ~= all_clients[j] then
 				all_clients[j].client.net_channel:post_reliable("SHOT_INFO", {
-					delay_time = client_sys.network:get_last_ping(client.guid)/2 + update_time_remaining,
+					delay_time = delay + update_time_remaining,
 					subject_id = character.replication.id,
 					position = msgs[i].gun_transform.pos,
 					rotation = msgs[i].gun_transform.rotation,

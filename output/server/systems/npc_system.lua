@@ -71,11 +71,7 @@ function npc_system:loop()
 		
 		target.orientation.crosshair_position = vec2.from_degrees(entity.transform.current.rotation)
 		
-		local best_weapon = npc:find_best_weapon()
-		
-		if best_weapon then
-			npc:select_item(best_weapon)
-		end
+
 		-- control alertness
 		
 		

@@ -72,8 +72,8 @@ world_archetypes.spawn_soldier = function(owner_server, pos)
 		
 		behaviour_tree = {
 			trees = {
-				npc_legs_behaviour_tree.legs
-				--npc_hands_behaviour_tree.hands
+				npc_legs_behaviour_tree.legs,
+				npc_hands_behaviour_tree.hands
 			}
 		}
 	}

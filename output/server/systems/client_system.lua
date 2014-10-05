@@ -42,18 +42,23 @@ function client_system:update_replicas_and_states()
 	end
 end
 
-
-function client_system:send_all_pending_data()
+function client_system:add_loop_separators()
 	for i=1, #self.targets do	
 		local client = self.targets[i].client
-		
-		-- write all unreliable data that substeps requested
-		client.net_channel:post_unreliable_bs(client.substep_unreliable)
 		
 		if client.net_channel:has_something_to_send() 
 		and client.net_channel.last_reliable_msg_type ~= "LOOP_SEPARATOR" then
 			client.net_channel:post_reliable("LOOP_SEPARATOR", {})
+			print "posting separator"
 		end
+	end
+end
+
+function client_system:send_all_pending_data()
+	for i=1, #self.targets do	
+		local client = self.targets[i].client
+		-- write all unreliable data that substeps requested
+		client.net_channel:post_unreliable_bs(client.substep_unreliable)
 		
 		local output_bs = client.net_channel:send()
 		

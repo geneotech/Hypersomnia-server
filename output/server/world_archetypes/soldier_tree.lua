@@ -36,6 +36,17 @@ escape_archetype = {
 	end
 }
 
+player_visible_archetype = {
+	node_type = behaviour_node.SELECTOR,
+	on_update = function(entity) 
+		if entity.script.npc.is_seen then
+			return behaviour_node.SUCCESS
+		else
+			return behaviour_node.FAILURE
+		end
+	end
+}
+
 npc_legs_behaviour_tree = create_behaviour_tree {	
 	nodes = {
 		legs = {
@@ -80,16 +91,7 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 		},
 		is_alert = clone_table(is_alert_archetype),
 		
-		player_visible = {
-			node_type = behaviour_node.SELECTOR,
-			on_update = function(entity) 
-				if entity.script.npc.is_seen then
-					return behaviour_node.SUCCESS
-				else
-					return behaviour_node.FAILURE
-				end
-			end
-		},
+		player_visible = clone_table(player_visible_archetype),
 		
 		gun_strategy = {
 			on_update = function(entity, task)
@@ -262,68 +264,73 @@ npc_legs_behaviour_tree = create_behaviour_tree {
 }
 
 
---npc_hands_behaviour_tree = create_behaviour_tree {
---	decorators = {},
---	
---	nodes = {
---		hands = {
---			node_type = behaviour_node.SEQUENCER,
---			default_return = behaviour_node.SUCCESS
---		},
---		
---		player_visible = {
---			on_update = function(entity) 
---				if get_scripted(entity).is_seen then 
---					return behaviour_node.SUCCESS
---				end
---				return behaviour_node.FAILURE
---			end
---		},
---		
---		anything_in_hands = archetyped(anything_in_hands_archetype, { node_type = behaviour_node.SELECTOR, skip_to_running_child = 0 }),
---		
---		melee_range = {
---			on_update = function(entity) 
---				if player.body:exists() then 
---					if (player.body:get().transform.current.pos - entity.transform.current.pos):length() < 100 then
---						entity.gun.trigger_mode = gun_component.MELEE
---						return behaviour_node.RUNNING
---					end
---				end
---				return behaviour_node.FAILURE
---			end,
---			
---			on_exit = function(entity) 
---				entity.gun.trigger_mode = gun_component.NONE
---			end
---			
---		},
---		
---		try_to_shoot = {
---			on_update = function(entity) 
---				if entity.gun.current_rounds > 0 then
---					entity.gun.trigger_mode = gun_component.SHOOT
---					return behaviour_node.RUNNING
---				end
---				
---				return behaviour_node.FAILURE
---			end,
---			
---			on_exit = function(entity) 
---				entity.gun.trigger_mode = gun_component.NONE
---			end
---		},
---	},
---	
---	connections = {
---		hands = {
---			"player_visible", "anything_in_hands"
---		},
---		
---		anything_in_hands = {
---			"melee_range", "try_to_shoot"
---		}
---	},
---	
---	root = "hands"
---}
+npc_hands_behaviour_tree = create_behaviour_tree {
+	nodes = {
+		hands = {
+			node_type = behaviour_node.SELECTOR,
+			default_return = behaviour_node.SUCCESS
+		},
+		
+		player_visible = clone_table(player_visible_archetype),
+			
+		try_to_shoot = {
+			on_update = function(entity)
+				local npc = entity.script.npc
+				
+				local best_weapon = npc:find_best_weapon()
+		
+				if best_weapon then
+					npc:select_item(best_weapon)
+				
+					if best_weapon.weapon.current_rounds > 0 then
+						best_weapon.weapon.trigger = components.weapon.triggers.SHOOT
+						return behaviour_node.RUNNING
+					end
+				end
+				
+				return behaviour_node.FAILURE
+			end,
+			
+			on_exit = function(entity)
+				local npc = entity.script.npc
+				npc:get_selected_item().weapon.trigger = components.weapon.triggers.NONE
+				npc:holster_item()
+			end
+		}
+		,
+		
+		--melee_range = {
+		--	on_update = function(entity) 
+		--		local npc = entity.script.npc
+		--		
+		--		
+		--		if player.body:exists() then 
+		--			if (player.body:get().transform.current.pos - entity.transform.current.pos):length() < 100 then
+		--				entity.gun.trigger_mode = gun_component.MELEE
+		--				return behaviour_node.RUNNING
+		--			end
+		--		end
+		--		return behaviour_node.FAILURE
+		--	end,
+		--	
+		--	on_exit = function(entity) 
+		--		entity.gun.trigger_mode = gun_component.NONE
+		--	end
+		--	
+		--},
+		
+	
+	},
+	
+	connections = {
+		hands = {
+			"player_visible"
+		},
+		
+		player_visible = {
+			"try_to_shoot"--, "melee_range"
+		}
+	},
+	
+	root = "hands"
+}
