@@ -9,8 +9,7 @@ components.replication.groups = create_enum {
 function components.replication:constructor(init)
 	self.module_sets = init.module_sets
 	
-	-- false - out of date
-	-- true - up to date
+	-- maps a client to its current replication group
 	-- nil - this object was not yet transmitted to a given client
 	self.remote_states = {}
 	
@@ -20,11 +19,8 @@ function components.replication:constructor(init)
 		self.public_group_name = "PUBLIC"
 	end 
 	
+	-- maps a wielding key to a sub entity
 	self.sub_entities = {}
-	
-	self.sub_entity_groups = {
-		WIELDED_ENTITIES = {}
-	}
 	
 	if init.upload_rate then
 		set_rate(self, "upload", init.upload_rate)

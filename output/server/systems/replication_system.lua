@@ -72,7 +72,7 @@ function replication_system:write_new_object(id, archetype_id, replica, output_b
 	local initial_state_bs = BitStream()
 	
 	for i=1, #protocol.module_mappings do
-		output_bs:name_property("has module " .. i)
+		output_bs:name_property("has module " .. protocol.module_mappings[i])
 		
 		local module_object = replica[protocol.module_mappings[i]]
 		
@@ -193,12 +193,6 @@ function replication_system:update_state_for_client(subject_client, post_recent_
 				
 				for k, v in pairs (replication.sub_entities) do
 					add_child(v)
-				end
-				
-				for group_name, group_table in pairs(replication.sub_entity_groups) do
-					for k, v in pairs(group_table) do
-						add_child(v)
-					end
 				end
 			end
 		)

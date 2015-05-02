@@ -294,4 +294,6 @@ function server_class:loop()
 	self.entity_system_instance:flush_messages()
 	
 	cpp_world:consume_events()
+	
+	collectgarbage("collect")
 end

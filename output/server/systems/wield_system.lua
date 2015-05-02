@@ -11,7 +11,7 @@ function wield_system:broadcast_changes(msg)
 		end
 			
 		if msg.unwield and subject.replication then
-			subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = nil
+			subject.replication.sub_entities[msg.wielding_key] = nil
 			--item.replication:switch_public_group("DROPPED_PUBLIC")
 			
 			if owner_client then
@@ -29,7 +29,7 @@ function wield_system:broadcast_changes(msg)
 			end
 		elseif msg.wield and item.replication and subject.replication then
 			local subject_states = subject.replication.remote_states
-			subject.replication.sub_entity_groups.WIELDED_ENTITIES[msg.wielding_key] = item
+			subject.replication.sub_entities[msg.wielding_key] = item
 			
 			local wield = subject.wield
 			local item_states = item.replication.remote_states

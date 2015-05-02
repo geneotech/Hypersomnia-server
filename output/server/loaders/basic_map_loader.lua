@@ -19,7 +19,7 @@ return function(map_filename, scene_object)
 	end
 	
 	-- initialize environmental physical objects
-	local environmental_objects = get_all_objects { "static_snow" }
+	local environmental_objects = get_all_objects { "cathedral_wall" }
 	
 	for i = 1, #environmental_objects do
 		local object = environmental_objects[i]
@@ -53,7 +53,8 @@ return function(map_filename, scene_object)
 	}
 	
 	scene_object.teleport_shuffler = array_shuffler:create(objects_by_type["teleport_position"])
-	
+	print ("TELEPORT!!!")
+	print(objects_by_type["teleport_position"][1].x, objects_by_type["teleport_position"][1].y)
 	-- bind the atlas once
 	GL.glActiveTexture(GL.GL_TEXTURE0)
 	scene_object.all_atlas:bind()
@@ -68,12 +69,12 @@ return function(map_filename, scene_object)
 	visibility_system.draw_discontinuities = 0
 	visibility_system.draw_visible_walls = 0
 	
-	visibility_system.epsilon_ray_distance_variation = 0.007
-	visibility_system.epsilon_threshold_obstacle_hit = 20
-	visibility_system.epsilon_distance_vertex_hit = 5
+	visibility_system.epsilon_ray_distance_variation = 0.001
+	visibility_system.epsilon_threshold_obstacle_hit = 2
+	visibility_system.epsilon_distance_vertex_hit = 1
 	
-	pathfinding_system.draw_memorised_walls = 1
-	pathfinding_system.draw_undiscovered = 1
+	pathfinding_system.draw_memorised_walls = 0
+	pathfinding_system.draw_undiscovered = 0
 	pathfinding_system.epsilon_max_segment_difference = 4
 	pathfinding_system.epsilon_distance_visible_point = 2
 	pathfinding_system.epsilon_distance_the_same_vertex = 10
@@ -87,7 +88,7 @@ return function(map_filename, scene_object)
 	render_system.draw_avoidance_info = 1
 	render_system.draw_wandering_info = 1
 	
-	render_system.visibility_expansion = 1.0
-	render_system.max_visibility_expansion_distance = 1
+	render_system.visibility_expansion = 0.0
+	render_system.max_visibility_expansion_distance = 0
 	render_system.draw_visibility = 0
 end

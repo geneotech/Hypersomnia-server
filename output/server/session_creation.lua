@@ -5,7 +5,10 @@ function server_class:create_incoming_sessions()
 		local msg = msgs[i]
 		local new_guid = msg.guid
 	
-		local world_character = world_archetypes.create_player(self.current_map, self.current_map.teleport_shuffler:next_value().pos)
+		local target_pos = self.current_map.teleport_shuffler:next_value().pos
+		local world_character = world_archetypes.create_player(self.current_map, target_pos)
+		print("POS: ")
+		print(target_pos.x, target_pos.y)
 		
 		local public_character_modules = create_replica { "movement", "crosshair", "health", "label" }
 		local owner_character_modules = create_replica { "movement", "health", "label" }
