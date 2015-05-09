@@ -1,14 +1,13 @@
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\protocol.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\archetypes\\archetype_library.lua")
-dofile "server\\world_archetypes\\world_archetypes.lua"
+dofile "server\\world_archetypes\\server_world_archetypes.lua"
 
-dofile "server\\components\\client.lua"
-dofile "server\\components\\replication.lua"
-dofile "server\\components\\client_controller.lua"
-dofile "server\\components\\orientation.lua"
-
-dofile "server\\components\\npc.lua"
+dofile "server\\components\\server_client_component.lua"
+dofile "server\\components\\server_replication_component.lua"
+dofile "server\\components\\server_client_controller_component.lua"
+dofile "server\\components\\server_orientation_component.lua"
+dofile "server\\components\\server_npc_component.lua"
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\weapons.lua")
 
@@ -21,12 +20,12 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\item_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\gun_sync.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\sync_modules\\label_sync.lua")
 
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\health.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\wield.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\item.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\inventory.lua")
-dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\label.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\weapon_component.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\health_component.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\wield_component.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\item_component.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\inventory_component.lua")
+dofile (CLIENT_CODE_DIRECTORY .. "scripts\\components\\label_component.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\protocol_system.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\weapon_system.lua")
@@ -34,20 +33,17 @@ dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\wield_system.lua")
 
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\item_system.lua")
 
-dofile "server\\systems\\inventory_system.lua"
+dofile "server\\systems\\server_inventory_system.lua"
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\systems\\inventory_system_shared.lua")
 
-dofile "server\\systems\\wield_system.lua"
-
-dofile "server\\systems\\client_controller_system.lua"
-dofile "server\\systems\\client_system.lua"
-dofile "server\\systems\\replication_system.lua"
-dofile "server\\systems\\orientation_system.lua"
-dofile "server\\systems\\bullet_broadcast_system.lua"
-
-dofile "server\\systems\\npc_system.lua"
-
-dofile "server\\systems\\health_system.lua"
+dofile "server\\systems\\server_wield_system.lua"
+dofile "server\\systems\\server_client_controller_system.lua"
+dofile "server\\systems\\server_client_system.lua"
+dofile "server\\systems\\server_replication_system.lua"
+dofile "server\\systems\\server_orientation_system.lua"
+dofile "server\\systems\\server_bullet_broadcast_system.lua"
+dofile "server\\systems\\server_npc_system.lua"
+dofile "server\\systems\\server_health_system.lua"
 
 dofile "server\\chat.lua"
 

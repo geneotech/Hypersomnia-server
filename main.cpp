@@ -14,7 +14,7 @@ int main() {
 	augs::lua_state_wrapper lua_state;
 	framework::bind_whole_engine(lua_state);
 
-	lua_state.dofile("init.lua"); 
+	lua_state.dofile("server_init.lua"); 
 
 	framework::deinit();
 	return 0;

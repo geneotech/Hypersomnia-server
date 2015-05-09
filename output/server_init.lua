@@ -2,7 +2,7 @@
 global_logfile = io.open("server_logfile.txt", "w")
 transmission_log = io.open("server_transmission.txt", "w")
 
-dofile "config.lua"
+dofile "server_config.lua"
 
 print "Initialization successful."
 
@@ -15,8 +15,8 @@ MAPS_DIRECTORY = CLIENT_CODE_DIRECTORY .. "data\\maps\\"
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\layers.lua")
 dofile (CLIENT_CODE_DIRECTORY .. "scripts\\game\\filters.lua")
 
-dofile "server\\view\\input.lua"
-dofile "server\\view\\camera.lua"
+dofile "server\\view\\server_input.lua"
+dofile "server\\view\\server_camera.lua"
 
 dofile "server\\server_class.lua"
 
@@ -24,7 +24,7 @@ dofile "server\\server_class.lua"
 
 server = server_class:create()
 server:start(config_table.server_port, 30, 60)
-server:set_current_map(MAPS_DIRECTORY .. "cathedral2.lua", "server\\loaders\\basic_map_loader.lua")
+server:set_current_map(MAPS_DIRECTORY .. "cathedral2.lua", "server\\loaders\\server_map_loader.lua")
 
 SHOULD_QUIT_FLAG = false
 

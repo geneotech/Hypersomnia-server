@@ -1,4 +1,4 @@
-dofile "server\\world_archetypes\\soldier_tree.lua"
+dofile "server\\world_archetypes\\server_soldier_tree.lua"
 
 world_archetypes.spawn_soldier = function(owner_server, pos)
 	local public_soldier_modules = create_replica { "movement", "orientation", "health" }
